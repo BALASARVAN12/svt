@@ -399,7 +399,7 @@ let items = [];
 let autoSaveTimer = null;
 let totalReturnsAccumulator = 0;
 
-// Navigation Routing Layout Switcher
+// Navigation Routing Switching System
 function showPage(page){
  document.getElementById('dashPage').classList.toggle('hidden', page!=='dash');
  document.getElementById('editorPage').classList.toggle('hidden', page!=='editor');
@@ -410,7 +410,7 @@ function showPage(page){
 }
 function goToDashboard(){ showPage('dash'); }
 
-// Database Sync API Handlers
+// API Cloud Core Controllers
 async function fetchBillsFromCloud() {
   const el = document.getElementById('saveStatus');
   if (el) el.textContent = 'Syncing database items...';
@@ -481,7 +481,7 @@ function calcFormAllPrices() {
 }
 
 /* ═══════════════════════════════════════════
- INVENTORY UI AND DIRECT TABLE CELL EDITORS
+ INVENTORY AND WAREHOUSE CONTROL
 ═══════════════════════════════════════════ */
 function renderInventoryGrid() {
   const tbody = document.getElementById('inventoryBody');
@@ -573,7 +573,7 @@ function removeInventoryItem(idx) {
 }
 
 /* ═══════════════════════════════════════════
- DASHBOARD METRICS CALCULATOR
+ DASHBOARD LOG ANALYTICS AND METRICS
 ═══════════════════════════════════════════ */
 function renderDashboard(){
  const q = (document.getElementById('searchInput').value||'').toLowerCase();
@@ -654,7 +654,6 @@ function renderDashboard(){
  }).join('');
 }
 
-/* FIXED CONFIRM-DELETE: Skips stock additions if the bill was never finalized/printed */
 function confirmDelete(id){
  const targetBill = allBills.find(function(b) { return b.id === id; });
  if(!targetBill) return;
@@ -678,7 +677,7 @@ function confirmDelete(id){
 }
 
 /* ═══════════════════════════════════════════
- BILL RECOMPILER INTERFACES
+ INVOICE RECOMPILER WORKSPACE
 ═══════════════════════════════════════════ */
 function startNewInvoice(){
  currentBillId = 'bill_'+Date.now();
@@ -718,7 +717,6 @@ function collectBillData(){
  const total = parseFloat(document.getElementById('grandTotal').textContent.replace(/,/g,''))||0;
  const recv = parseFloat(document.getElementById('received').textContent.replace(/,/g,''))||0;
  
- // Find existing record state to preserve historical deduction tags
  const existingBill = allBills.find(function(b) { return b.id === currentBillId; });
  const previouslyDeducted = existingBill ? !!existingBill.isDeducted : false;
 
@@ -744,8 +742,30 @@ function showSaveStatus(msg){
   if (el) el.textContent = msg; 
 }
 
-/* SAFE SELECTION AND TRANSACTION PROTOCOL LOGS */
+/* ═══════════════════════════════════════════
+ CRITICAL BUGFIX: DUAL-PRINT STOCK LOCK PROFILES
+═══════════════════════════════════════════ */
 async function printAndSave(){
+ const existingBillState = allBills.find(function(b) { return b.id === currentBillId; });
+ const alreadyProcessed = existingBillState ? !!existingBillState.isDeducted : false;
+
+ // If the card is already finalized, skip the warehouse deduction pipeline completely
+ if (alreadyProcessed) {
+   showSaveStatus("Updating bill information...");
+   const bill = collectBillData();
+   const idx = allBills.findIndex(function(b) { return b.id === bill.id; });
+   if(idx>=0) allBills[idx]=bill;
+   
+   try {
+     await uploadBillsToCloud();
+     window.print();
+   } catch(e) {
+     console.error("Cloud reprint sync timeout: ", e);
+   }
+   return; 
+ }
+
+ // Execution path for brand-new drafts
  for (let i = 0; i < items.length; i++) {
    let item = items[i];
    if (!item.name) continue;
@@ -769,7 +789,7 @@ async function printAndSave(){
  showSaveStatus("Syncing stock volumes globally...");
  
  const bill = collectBillData();
- bill.isDeducted = true; // Sets verification flag directly upon complete final print execution
+ bill.isDeducted = true; // Permanently lock card execution status
  
  const idx = allBills.findIndex(function(b) { return b.id === bill.id; });
  if(idx>=0) allBills[idx]=bill; else allBills.unshift(bill);
@@ -783,7 +803,6 @@ async function printAndSave(){
  }
 }
 
-/* FIXED DELETE-CURRENT: Skips stock reconciliation if bill was a raw unprinted draft */
 function deleteCurrent(){
  if(!currentBillId) return;
  if(!confirm("Delete this bill entirely?")) return;
@@ -810,7 +829,7 @@ function deleteCurrent(){
 }
 
 /* ═══════════════════════════════════════════
- INVOICE ROW RENDERER & DUAL-TRACK MATHEMATICS
+ INVOICE ROW TABLES MATRIX
 ═══════════════════════════════════════════ */
 function renderItems(){
  const body=document.getElementById('itemsBody');

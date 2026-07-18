@@ -523,11 +523,26 @@ function renderDashboard(){
  }).join('');
 }
 
+// Global Dashboard Item Delete Configuration Trigger (Safe Stock Return Tracking)
 function confirmDelete(id){
- if(!confirm("Delete this invoice completely?")) return;
+ const targetBill = allBills.find(b => b.id === id);
+ if(!targetBill) return;
+ if(!confirm("Delete this invoice completely? This returns sold stock amounts to inventory.")) return;
+ 
+ if (targetBill.items && Array.isArray(targetBill.items)) {
+   targetBill.items.forEach(item => {
+     const stockItem = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
+     if (stockItem) {
+       stockItem.quantity += (parseFloat(item.qty) || 0);
+     }
+   });
+ }
+
  allBills = allBills.filter(b=>b.id!==id);
- uploadBillsToCloud();
- renderDashboard();
+ 
+ Promise.all([uploadInventoryToCloud(), uploadBillsToCloud()]).then(() => {
+   renderDashboard();
+ });
 }
 
 /* ═══════════════════════════════════════════
@@ -537,7 +552,16 @@ function startNewInvoice(){
  currentBillId = 'bill_'+Date.now();
  items=[{name:'',hsn:'',qty:1,unit:'Kg',price:0,gstPct:5}];
  showPage('editor');
- resetEditorFields({ invoiceNo: String(allBills.length+1), invoiceDate: new Date().toLocaleDateString('en-GB'), customerName:'Customer Name', customerAddr:'Customer Address', received:'0.00' });
+ 
+ // Robust array calculation logic check to prevent load crashes
+ const nextInvoiceNo = allBills && allBills.length ? String(allBills.length + 1) : "1";
+ resetEditorFields({ 
+   invoiceNo: nextInvoiceNo, 
+   invoiceDate: new Date().toLocaleDateString('en-GB'), 
+   customerName:'Customer Name', 
+   customerAddr:'Customer Address', 
+   received:'0.00' 
+ });
  renderItems();
 }
 
@@ -610,6 +634,30 @@ async function printAndSave(){
  window.print();
 }
 
+// Editor View Delete Action Logic Handler (Fixed Stock Refund Routine)
+function deleteCurrent(){
+ if(!currentBillId) return;
+ if(!confirm(`Delete this bill entirely? This returns sold stock amounts to inventory.`)) return;
+ 
+ const targetBill = allBills.find(b => b.id === currentBillId);
+ if (targetBill && targetBill.items) {
+   targetBill.items.forEach(item => {
+     const stockItem = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
+     if (stockItem) {
+       stockItem.quantity += (parseFloat(item.qty) || 0);
+     }
+   });
+ }
+
+ allBills = allBills.filter(b=>b.id!==currentBillId);
+ 
+ showSaveStatus("Updating cloud archives...");
+ Promise.all([uploadInventoryToCloud(), uploadBillsToCloud()]).then(() => {
+   currentBillId = null;
+   showPage('dash');
+ });
+}
+
 /* ═══════════════════════════════════════════
  ITEMS TABLE & STABLE DROPDOWN ENGINE
 ═══════════════════════════════════════════ */
@@ -653,12 +701,11 @@ function attachEditListeners(){
 
    if (!nameInput || !suggestBox) return;
 
-   // Real-time keystroke observer
    nameInput.addEventListener('input', () => {
      const rawText = nameInput.innerText || nameInput.textContent || '';
      const query = rawText.replace(/[\n\r\t]/g, '').replace(/\u00a0/g, ' ').trim().toLowerCase();
      
-     if (!query || query === "type stock item name...") { 
+     if (!query) { 
        suggestBox.style.display = 'none'; 
        return; 
      }
@@ -679,9 +726,8 @@ function attachEditListeners(){
      suggestBox.style.display = 'block';
    });
 
-   // Intercept selection clicks cleanly
    suggestBox.addEventListener('mousedown', e => {
-     e.preventDefault(); // Prevents blur event from firing before click registers
+     e.preventDefault(); 
      const itemEl = e.target.closest('.suggestion-item');
      if (!itemEl || !itemEl.dataset.name) return;
 
@@ -694,13 +740,14 @@ function attachEditListeners(){
        items[idx].price = match.price;
        items[idx].gstPct = match.gstPct;
        items[idx].unit = match.unit;
+       
+       nameInput.innerText = match.name;
        renderItems();
      }
      suggestBox.style.display = 'none';
    });
 
    nameInput.addEventListener('blur', () => {
-     // Safe execution delay to close the panel frame
      setTimeout(() => { suggestBox.style.display = 'none'; }, 200);
      const rawText = nameInput.innerText || nameInput.textContent || '';
      items[idx].name = rawText.replace(/[\n\r\t]/g, '').replace(/\u00a0/g, ' ').trim();
@@ -734,7 +781,6 @@ function recalcAll(){
    const subTotalEl = document.getElementById('subTotal');
    const grandTotalEl = document.getElementById('grandTotal');
    const balanceEl = document.getElementById('balance');
-   const amtWordsEl = document.getElementById('amtWords');
 
    if(totQtyEl) totQtyEl.textContent=tQty;
    if(totGstEl) totGstEl.textContent='₹'+fmt(tGst);
@@ -743,7 +789,25 @@ function recalcAll(){
    if(grandTotalEl) grandTotalEl.textContent=fmt(tAmt);
    const r = parseFloat((document.getElementById('received')?.textContent || '0').replace(/,/g,''))||0;
    if(balanceEl) balanceEl.textContent=fmt(Math.max(0, tAmt - r));
+   if(document.getElementById('amtWords')) {
+     document.getElementById('amtWords').textContent=' ('+numberToWordsRupees(Math.round(tAmt))+' only)';
+   }
    autoSave();
+}
+
+function numberToWordsRupees(num){
+ if(num===0) return 'Zero Rupees';
+ const ones=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
+ const tens=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
+ function two(n){ return n<20?ones[n]:tens[Math.floor(n/10)]+(n%10?' '+ones[n%10]:''); }
+ function three(n){ return n>=100?ones[Math.floor(n/100)]+' Hundred'+(n%100?' '+two(n%100):''):two(n); }
+ const cr=Math.floor(num/10000000),lk=Math.floor((num%10000000)/100000),th=Math.floor((num%100000)/1000),hu=num%1000;
+ const p=[];
+ if(cr) p.push(three(cr)+' Crore');
+ if(lk) p.push(three(lk)+' Lakh');
+ if(th) p.push(three(th)+' Thousand');
+ if(hu) p.push(three(hu));
+ return p.join(' ')+' Rupees';
 }
 
 document.getElementById('received')?.addEventListener('input', recalcAll);

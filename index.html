@@ -327,8 +327,8 @@ table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
      <th>HSN Code</th>
      <th class="num">Qty</th>
      <th class="center">Unit</th>
-     <th class="num">Price/Unit<br>(Excl. GST)</th>
-     <th class="num">Price/Unit<br>(Incl. GST)</th>
+     <th>Price/Unit<br>(Excl. GST)</th>
+     <th>Price/Unit<br>(Incl. GST)</th>
      <th class="num">GST Amt</th>
      <th class="num">Amount<br>(Excl. GST)</th>
      <th class="num">Amount<br>(Incl. GST)</th>
@@ -480,19 +480,19 @@ function renderInventoryGrid() {
     const inclusiveCost = baseCost * taxMultiplier;
     const inclusiveSell = baseSell * taxMultiplier;
     
-    return `<tr>
-      <td><b>${it.name}</b></td>
-      <td>${it.hsn || '—'}</td>
-      <td><span style="font-size:14px; font-weight:bold;">${it.quantity}</span></td>
-      <td>${it.unit}</td>
-      <td>₹${baseCost.toFixed(2)}</td>
-      <td style="color:#475569; font-weight:600;">₹${inclusiveCost.toFixed(2)}</td>
-      <td>₹${baseSell.toFixed(2)}</td>
-      <td style="color:#1e3a8a; font-weight:bold;">₹${inclusiveSell.toFixed(2)}</td>
-      <td>${it.gstPct}%</td>
-      <td><span class="stock-status ${isOut ? 'stock-out':'stock-in'}">${isOut ? 'OUT OF STOCK':'AVAILABLE'}</span></td>
-      <td><button class="btn btn-danger btn-sm" onclick="removeInventoryItem(${idx})">✕ Remove</button></td>
-    </tr>`;
+    return '<tr>' +
+      '<td><b>' + it.name + '</b></td>' +
+      '<td>' + (it.hsn || '—') + '</td>' +
+      '<td><span style="font-size:14px; font-weight:bold;">' + it.quantity + '</span></td>' +
+      '<td>' + it.unit + '</td>' +
+      '<td>₹' + baseCost.toFixed(2) + '</td>' +
+      '<td style="color:#475569; font-weight:600;">₹' + inclusiveCost.toFixed(2) + '</td>' +
+      '<td>₹' + baseSell.toFixed(2) + '</td>' +
+      '<td style="color:#1e3a8a; font-weight:bold;">₹' + inclusiveSell.toFixed(2) + '</td>' +
+      '<td>' + it.gstPct + '%</td>' +
+      '<td><span class="stock-status ' + (isOut ? 'stock-out' : 'stock-in') + '">' + (isOut ? 'OUT OF STOCK' : 'AVAILABLE') + '</span></td>' +
+      '<td><button class="btn btn-danger btn-sm" onclick="removeInventoryItem(' + idx + ')">✕ Remove</button></td>' +
+    '</tr>';
   }).join('');
   renderDashboard();
 }
@@ -540,6 +540,9 @@ function showPage(page){
 }
 function goToDashboard(){ showPage('dash'); }
 
+/* ═══════════════════════════════════════════
+ REBUILT SAFE DASHBOARD LAYOUT ENGINE
+═══════════════════════════════════════════ */
 function renderDashboard(){
  const q = (document.getElementById('searchInput').value||'').toLowerCase();
  let bills = [...allBills];
@@ -598,6 +601,7 @@ function renderDashboard(){
    bills = bills.filter(b=> (b.customerName||'').toLowerCase().includes(q) || (b.invoiceNo||'').toLowerCase().includes(q) );
  }
 
+ // Re-stitched with clean standard string additions to bypass script parser breaks
  grid.innerHTML = bills.map(b => {
    const pm = b.paymentMode || 'Cash';
    return '<div class="bill-card">' +
@@ -609,8 +613,8 @@ function renderDashboard(){
        (b.balance > 0 ? '<span class="badge danger">Due ₹' + b.balance + '</span>' : '<span class="badge" style="background:#dcfce7; color:#166534;">Paid</span>') +
      '</div>' +
      '<div class="bill-card-actions">' +
-       '<button class="btn btn-primary btn-sm" onclick="editBill(\'' + b.id + '\')">✏️ Edit</button>' +
-       '<button class="btn btn-secondary btn-sm" onclick="printBill(\'' + b.id + '\')">🖨️ Print</button>' +
+       '<button class="btn btn-primary btn-sm" onclick="editBill(\'' + b.id + '\')">✏️ Edit</button> ' +
+       '<button class="btn btn-secondary btn-sm" onclick="printBill(\'' + b.id + '\')">🖨️ Print</button> ' +
        '<button class="btn btn-danger btn-sm" onclick="confirmDelete(\'' + b.id + '\')">🗑</button>' +
      '</div>' +
    '</div>';
@@ -697,11 +701,7 @@ function showSaveStatus(msg){
   if (el) el.textContent = msg; 
 }
 
-/* ═══════════════════════════════════════════
- CRITICAL STOCK TRANSACTION FIX ENGINE
-═══════════════════════════════════════════ */
 async function printAndSave(){
- // 1. Pre-validate stock levels across all added lines
  for (let item of items) {
    if (!item.name) continue;
    const stockItem = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
@@ -713,7 +713,6 @@ async function printAndSave(){
    }
  }
 
- // 2. Deduct quantities from your available stock tracking profile array
  items.forEach(item => {
    if (!item.name) continue;
    const stockItem = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
@@ -728,7 +727,6 @@ async function printAndSave(){
  const idx = allBills.findIndex(b=>b.id===bill.id);
  if(idx>=0) allBills[idx]=bill; else allBills.unshift(bill);
  
- // 3. Pushes changes together AND forces the application array to lock
  try {
    await uploadInventoryToCloud();
    await uploadBillsToCloud();
@@ -740,7 +738,7 @@ async function printAndSave(){
 
 function deleteCurrent(){
  if(!currentBillId) return;
- if(!confirm(`Delete this bill entirely? This returns sold stock amounts to inventory.`)) return;
+ if(!confirm("Delete this bill entirely? This returns sold stock amounts to inventory.")) return;
  
  const targetBill = allBills.find(b => b.id === currentBillId);
  if (targetBill) {
@@ -764,7 +762,7 @@ function deleteCurrent(){
 }
 
 /* ═══════════════════════════════════════════
- ITEMS ENTRY MATRIX & AUTO-TAX BUILDER
+ ITEMS TABLE AND TAX RENDERING MODULES
 ═══════════════════════════════════════════ */
 function renderItems(){
  const body=document.getElementById('itemsBody');
@@ -782,23 +780,22 @@ function renderItems(){
 
    const tr = document.createElement('tr');
    tr.dataset.idx = idx;
-   tr.innerHTML = `
-   <td>${idx+1}</td>
-   <td>
-     <div class="name-cell-container">
-       <div contenteditable="true" class="item-name-input" placeholder="Enter item name...">${it.name}</div>
-       <div class="suggestion-box" id="suggest-${idx}"></div>
-     </div>
-   </td>
-   <td contenteditable="true" data-field="hsn" class="center">${it.hsn}</td>
-   <td class="num" contenteditable="true" data-field="qty">${it.qty}</td>
-   <td class="center" contenteditable="true" data-field="unit">${it.unit}</td>
-   <td class="num" contenteditable="true" data-field="price">${fmt(unitPriceExclGst)}</td>
-   <td class="num" style="color: #475569; font-weight: 500;">₹${fmt(unitPriceInclGst)}</td>
-   <td class="num">₹${fmt(rowGstTotalAmt)} (${it.gstPct}%)</td>
-   <td class="num" style="background: #fafafa;">₹${fmt(rowAmountExclGst)}</td>
-   <td class="num" style="background: #f8fafc; font-weight: bold; color: #1e3a8a;">₹${fmt(rowAmountInclGst)}</td>
-   <td class="del-cell"><button class="row-del" onclick="deleteRow(${idx})">✕</button></td>`;
+   tr.innerHTML = '<td>' + (idx + 1) + '</td>' +
+     '<td>' +
+       '<div class="name-cell-container">' +
+         '<div contenteditable="true" class="item-name-input" placeholder="Enter item name...">' + it.name + '</div>' +
+         '<div class="suggestion-box" id="suggest-' + idx + '"></div>' +
+       '</div>' +
+     '</td>' +
+     '<td contenteditable="true" data-field="hsn" class="center">' + it.hsn + '</td>' +
+     '<td class="num" contenteditable="true" data-field="qty">' + it.qty + '</td>' +
+     '<td class="center" contenteditable="true" data-field="unit">' + it.unit + '</td>' +
+     '<td class="num" contenteditable="true" data-field="price">' + fmt(unitPriceExclGst) + '</td>' +
+     '<td class="num" style="color: #475569; font-weight: 500;">单元₹' + fmt(unitPriceInclGst) + '</td>' +
+     '<td class="num">₹' + fmt(rowGstTotalAmt) + ' (' + it.gstPct + '%)</td>' +
+     '<td class="num" style="background: #fafafa;">₹' + fmt(rowAmountExclGst) + '</td>' +
+     '<td class="num" style="background: #f8fafc; font-weight: bold; color: #1e3a8a;">₹' + fmt(rowAmountInclGst) + '</td>' +
+     '<td class="del-cell"><button class="row-del" onclick="deleteRow(' + idx + ')">✕</button></td>';
    body.appendChild(tr);
  });
  attachEditListeners();
@@ -822,15 +819,15 @@ function attachEditListeners(){
      const matches = inventory.filter(i => i.name.toLowerCase().includes(query));
 
      if (matches.length === 0) {
-       suggestBox.innerHTML = `<div class="suggestion-item" style="color:#94a3b8;">No stock item found</div>`;
+       suggestBox.innerHTML = '<div class="suggestion-item" style="color:#94a3b8;">No stock item found</div>';
      } else {
        suggestBox.innerHTML = matches.map(match => {
          const isOut = match.quantity <= 0;
          const incPrice = (match.sellingPrice || 0) * (1 + ((match.gstPct || 5) / 100));
-         return `<div class="suggestion-item" data-name="${match.name}">
-           <span>${match.name}</span>
-           <span class="item-stock ${isOut ? 'out':''}">${isOut ? 'Out of Stock' : `${match.quantity} ${match.unit} left (Total: ₹${incPrice.toFixed(2)})`}</span>
-         </div>`;
+         return '<div class="suggestion-item" data-name="' + match.name + '">' +
+           '<span>' + match.name + '</span>' +
+           '<span class="item-stock ' + (isOut ? 'out' : '') + '">' + (isOut ? 'Out of Stock' : (match.quantity + ' ' + match.unit + ' left (Total: ₹' + incPrice.toFixed(2) + ')')) + '</span>' +
+         '</div>';
        }).join('');
      }
      suggestBox.style.display = 'block';
@@ -922,15 +919,15 @@ function recalcAll(){
        const grp = taxGroups[hsn];
        const halfRate = grp.rate / 2;
        const halfTax = grp.taxAmt / 2;
-       return `<tr>
-         <td class="left">${hsn}</td>
-         <td>${fmt(grp.taxable)}</td>
-         <td class="center">${halfRate}%</td>
-         <td>${fmt(halfTax)}</td>
-         <td class="center">${halfRate}%</td>
-         <td>${fmt(halfTax)}</td>
-         <td style="font-weight: bold;">${fmt(grp.taxAmt)}</td>
-       </tr>`;
+       return '<tr>' +
+         '<td class="left">' + hsn + '</td>' +
+         '<td>' + fmt(grp.taxable) + '</td>' +
+         '<td class="center">' + halfRate + '%</td>' +
+         '<td>' + fmt(halfTax) + '</td>' +
+         '<td class="center">' + halfRate + '%</td>' +
+         '<td>' + fmt(halfTax) + '</td>' +
+         '<td style="font-weight: bold;">' + fmt(grp.taxAmt) + '</td>' +
+       '</tr>';
      }).join('');
      
      if(document.getElementById('tbTaxableTotal')) document.getElementById('tbTaxableTotal').textContent = fmt(tTaxableTotal);
@@ -967,7 +964,7 @@ async function lookupGstin(gstin,type){
  const g=gstin.trim().toUpperCase();
  if(!GSTIN_REGEX.test(g)) return;
  try{
- const res=await fetch(`/api/bills?gstin=${g}`);
+ const res=await fetch('/api/bills?gstin=' + g);
  const json=await res.json();
  const rec=json?.data?.data||json?.data||json?.taxpayerInfo||json;
  if(!rec||json.flag===false||json.error) return;

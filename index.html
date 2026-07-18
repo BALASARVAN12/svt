@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Sree Valli Traders — Invoice & Inventory Manager</title>
+<title>Sree Valli Traders — Master Invoice & Inventory Manager</title>
 <style>
 :root{
  --ink:#1a1a1a;--line:#333;--line-light:#888;--bg:#fff;--accent:#f4f4f4;
@@ -399,6 +399,18 @@ let items = [];
 let autoSaveTimer = null;
 let totalReturnsAccumulator = 0;
 
+// Page Navigation
+function showPage(page){
+ document.getElementById('dashPage').classList.toggle('hidden', page!=='dash');
+ document.getElementById('editorPage').classList.toggle('hidden', page!=='editor');
+ document.getElementById('inventoryPage').classList.toggle('hidden', page!=='inventory');
+ 
+ if(page==='dash') { fetchBillsFromCloud(); fetchInventoryFromCloud(); }
+ if(page==='inventory') fetchInventoryFromCloud();
+}
+function goToDashboard(){ showPage('dash'); }
+
+// Database Synchronization Handlers
 async function fetchBillsFromCloud() {
   const el = document.getElementById('saveStatus');
   if (el) el.textContent = 'Syncing database items...';
@@ -468,10 +480,14 @@ function calcFormAllPrices() {
   document.getElementById('invSellInclusive').value = inclusiveSell ? '₹' + inclusiveSell.toFixed(2) : '';
 }
 
+/* ═══════════════════════════════════════════
+ INVENTORY UI AND DIRECT TABLE CELL EDITORS
+═══════════════════════════════════════════ */
 function renderInventoryGrid() {
   const tbody = document.getElementById('inventoryBody');
   if(!tbody) return;
-  tbody.innerHTML = inventory.map((it, idx) => {
+  
+  tbody.innerHTML = inventory.map(function(it, idx) {
     const isOut = it.quantity <= 0;
     const baseCost = it.costPrice || 0;
     const baseSell = it.sellingPrice || 0;
@@ -483,17 +499,31 @@ function renderInventoryGrid() {
     return '<tr>' +
       '<td><b>' + it.name + '</b></td>' +
       '<td>' + (it.hsn || '—') + '</td>' +
-      '<td><span style="font-size:14px; font-weight:bold;">' + it.quantity + '</span></td>' +
+      '<td><span contenteditable="true" class="edit-inv-cell" data-idx="' + idx + '" data-field="quantity" style="font-size:14px; font-weight:bold; border-bottom:1px dotted #888;">' + it.quantity + '</span></td>' +
       '<td>' + it.unit + '</td>' +
-      '<td>₹' + baseCost.toFixed(2) + '</td>' +
+      '<td>₹<span contenteditable="true" class="edit-inv-cell" data-idx="' + idx + '" data-field="costPrice" style="border-bottom:1px dotted #888;">' + baseCost.toFixed(2) + '</span></td>' +
       '<td style="color:#475569; font-weight:600;">₹' + inclusiveCost.toFixed(2) + '</td>' +
-      '<td>₹' + baseSell.toFixed(2) + '</td>' +
+      '<td>₹<span contenteditable="true" class="edit-inv-cell" data-idx="' + idx + '" data-field="sellingPrice" style="border-bottom:1px dotted #888;">' + baseSell.toFixed(2) + '</span></td>' +
       '<td style="color:#1e3a8a; font-weight:bold;">₹' + inclusiveSell.toFixed(2) + '</td>' +
       '<td>' + it.gstPct + '%</td>' +
       '<td><span class="stock-status ' + (isOut ? 'stock-out' : 'stock-in') + '">' + (isOut ? 'OUT OF STOCK' : 'AVAILABLE') + '</span></td>' +
       '<td><button class="btn btn-danger btn-sm" onclick="removeInventoryItem(' + idx + ')">✕ Remove</button></td>' +
     '</tr>';
   }).join('');
+  
+  document.querySelectorAll('.edit-inv-cell').forEach(function(cell) {
+    cell.addEventListener('blur', function() {
+      const idx = parseInt(cell.dataset.idx);
+      const field = cell.dataset.field;
+      let val = parseFloat(cell.textContent.replace(/,/g, '')) || 0;
+      
+      inventory[idx][field] = val;
+      uploadInventoryToCloud().then(function() {
+        renderInventoryGrid();
+      });
+    });
+  });
+  
   renderDashboard();
 }
 
@@ -508,8 +538,20 @@ function addInventoryItem() {
 
   if(!name) { alert("Product name required"); return; }
   
-  inventory.push({ name, hsn, quantity: qty, unit, costPrice, sellingPrice, gstPct });
-  uploadInventoryToCloud().then(() => {
+  const match = inventory.find(function(i) { return i.name.toLowerCase() === name.toLowerCase(); });
+  
+  if (match) {
+    match.quantity += qty;
+    match.hsn = hsn;
+    match.costPrice = costPrice;
+    match.sellingPrice = sellingPrice;
+    match.gstPct = gstPct;
+    match.unit = unit;
+  } else {
+    inventory.push({ name: name, hsn: hsn, quantity: qty, unit: unit, costPrice: costPrice, sellingPrice: sellingPrice, gstPct: gstPct });
+  }
+  
+  uploadInventoryToCloud().then(function() {
     renderInventoryGrid();
   });
 
@@ -525,21 +567,14 @@ function addInventoryItem() {
 function removeInventoryItem(idx) {
   if(!confirm("Remove item from stock?")) return;
   inventory.splice(idx, 1);
-  uploadInventoryToCloud().then(() => {
+  uploadInventoryToCloud().then(function() {
     renderInventoryGrid();
   });
 }
 
-function showPage(page){
- document.getElementById('dashPage').classList.toggle('hidden', page!=='dash');
- document.getElementById('editorPage').classList.toggle('hidden', page!=='editor');
- document.getElementById('inventoryPage').classList.toggle('hidden', page!=='inventory');
- 
- if(page==='dash') { fetchBillsFromCloud(); fetchInventoryFromCloud(); }
- if(page==='inventory') fetchInventoryFromCloud();
-}
-function goToDashboard(){ showPage('dash'); }
-
+/* ═══════════════════════════════════════════
+ DASHBOARD METRICS CALCULATOR
+═══════════════════════════════════════════ */
 function renderDashboard(){
  const q = (document.getElementById('searchInput').value||'').toLowerCase();
  let bills = [...allBills];
@@ -548,13 +583,13 @@ function renderDashboard(){
  let netIncomeProfit = 0;
  let totalPendingBalance = 0;
 
- bills.forEach(b => {
+ bills.forEach(function(b) {
    totalRevenue += (b.grandTotal || 0);
    totalPendingBalance += (b.balance || 0);
    
    if (b.items && Array.isArray(b.items)) {
-     b.items.forEach(item => {
-       const stockMatch = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
+     b.items.forEach(function(item) {
+       const stockMatch = inventory.find(function(i) { return i.name.toLowerCase() === item.name.toLowerCase(); });
        const cost = stockMatch ? (stockMatch.costPrice || 0) : 0;
        const sale = item.price || 0; 
        const itemQty = item.qty || 0;
@@ -567,7 +602,7 @@ function renderDashboard(){
  let totalStockCostValuationWithGST = 0;
  let totalExpectedStockRevenueWithGST = 0;
 
- inventory.forEach(i => {
+ inventory.forEach(function(i) {
    const taxMultiplier = 1 + ((i.gstPct || 5) / 100);
    const baseCostValue = (i.quantity || 0) * (i.costPrice || 0);
    totalStockCostValuationWithGST += (baseCostValue * taxMultiplier);
@@ -595,10 +630,12 @@ function renderDashboard(){
  document.getElementById('noBills').classList.add('hidden');
 
  if(q){
-   bills = bills.filter(b=> (b.customerName||'').toLowerCase().includes(q) || (b.invoiceNo||'').toLowerCase().includes(q) );
+   bills = bills.filter(function(b) {
+     return (b.customerName||'').toLowerCase().includes(q) || (b.invoiceNo||'').toLowerCase().includes(q);
+   });
  }
 
- grid.innerHTML = bills.map(b => {
+ grid.innerHTML = bills.map(function(b) {
    const pm = b.paymentMode || 'Cash';
    return '<div class="bill-card">' +
      '<div class="bill-card-top"><span class="bill-inv">Invoice #' + (b.invoiceNo || '—') + '</span><span class="bill-date">' + (b.invoiceDate || '—') + '</span></div>' +
@@ -618,27 +655,30 @@ function renderDashboard(){
 }
 
 function confirmDelete(id){
- const targetBill = allBills.find(b => b.id === id);
+ const targetBill = allBills.find(function(b) { return b.id === id; });
  if(!targetBill) return;
- if(!confirm("Delete this invoice completely? This returns sold stock amounts to inventory and logs returned totals.")) return;
+ if(!confirm("Delete this invoice completely? This returns sold stock amounts to inventory.")) return;
  
  totalReturnsAccumulator += (targetBill.grandTotal || 0);
 
  if (targetBill.items && Array.isArray(targetBill.items)) {
-   targetBill.items.forEach(item => {
-     const stockItem = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
+   targetBill.items.forEach(function(item) {
+     const stockItem = inventory.find(function(i) { return i.name.toLowerCase() === item.name.toLowerCase(); });
      if (stockItem) {
        stockItem.quantity += (parseFloat(item.qty) || 0);
      }
    });
  }
 
- allBills = allBills.filter(b=>b.id!==id);
- Promise.all([uploadInventoryToCloud(), uploadBillsToCloud()]).then(() => {
+ allBills = allBills.filter(function(b) { return b.id !== id; });
+ Promise.all([uploadInventoryToCloud(), uploadBillsToCloud()]).then(function() {
    renderInventoryGrid();
  });
 }
 
+/* ═══════════════════════════════════════════
+ INVOICE GENERATOR STATE RECORDERS
+═══════════════════════════════════════════ */
 function startNewInvoice(){
  currentBillId = 'bill_'+Date.now();
  items=[{name:'',hsn:'',qty:1,unit:'Kg',price:0,gstPct:5}];
@@ -656,19 +696,19 @@ function startNewInvoice(){
 
 function editBill(id){
  currentBillId = id;
- const bill = allBills.find(b=>b.id===id);
+ const bill = allBills.find(function(b) { return b.id === id; });
  if(!bill) return;
- items = (bill.items||[]).map(i=>({...i}));
+ items = (bill.items||[]).map(function(i) { return Object.assign({}, i); });
  showPage('editor');
  resetEditorFields(bill);
  renderItems();
 }
 
-function printBill(id){ editBill(id); setTimeout(()=>{ printAndSave(); }, 400); }
+function printBill(id){ editBill(id); setTimeout(function(){ printAndSave(); }, 400); }
 
 function resetEditorFields(data){
- const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val||''; };
- const setDS = (ds,val)=>{ const el=document.querySelector(`[data-save="${ds}"]`); if(el) el.textContent=val||''; };
+ const set = function(id,val){ const el=document.getElementById(id); if(el) el.textContent=val||''; };
+ const setDS = function(ds,val){ const el=document.querySelector('[data-save="' + ds + '"]'); if(el) el.textContent=val||''; };
  setDS('customerName', data.customerName); setDS('customerAddr', data.customerAddr);
  set('invoiceNo', data.invoiceNo); set('invoiceDate', data.invoiceDate); set('received', data.received||'0.00');
 }
@@ -687,32 +727,33 @@ function autoSave(){
  if(!currentBillId) return;
  clearTimeout(autoSaveTimer);
  const bill = collectBillData();
- const idx = allBills.findIndex(b=>b.id===bill.id);
+ const idx = allBills.findIndex(function(b) { return b.id === bill.id; });
  if(idx>=0) allBills[idx]=bill; else allBills.unshift(bill);
  autoSaveTimer = setTimeout(uploadBillsToCloud, 1500);
 }
 
-// FIXED CRITICAL STOCK UPDATE LAYER: Locks data and updates correctly on save
 function showSaveStatus(msg){ 
   const el = document.getElementById('saveStatus');
   if (el) el.textContent = msg; 
 }
 
+/* CRITICAL: Safe warehouse verification before printing window triggers */
 async function printAndSave(){
- for (let item of items) {
+ for (let i = 0; i < items.length; i++) {
+   let item = items[i];
    if (!item.name) continue;
-   const stockItem = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
+   const stockItem = inventory.find(function(inv) { return inv.name.toLowerCase() === item.name.toLowerCase(); });
    if (stockItem) {
      if (stockItem.quantity < (parseFloat(item.qty) || 0)) {
-       alert(`Cannot finalize invoice! "${item.name}" has only ${stockItem.quantity} left in stock.`);
+       alert('Cannot finalize invoice! "' + item.name + '" has only ' + stockItem.quantity + ' left in stock.');
        return;
      }
    }
  }
 
- items.forEach(item => {
+ items.forEach(function(item) {
    if (!item.name) continue;
-   const stockItem = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
+   const stockItem = inventory.find(function(inv) { return inv.name.toLowerCase() === item.name.toLowerCase(); });
    if (stockItem) {
      stockItem.quantity = Math.max(0, stockItem.quantity - (parseFloat(item.qty) || 0));
    }
@@ -721,7 +762,7 @@ async function printAndSave(){
  showSaveStatus("Syncing stock volumes globally...");
  
  const bill = collectBillData();
- const idx = allBills.findIndex(b=>b.id===bill.id);
+ const idx = allBills.findIndex(function(b) { return b.id === bill.id; });
  if(idx>=0) allBills[idx]=bill; else allBills.unshift(bill);
  
  try {
@@ -735,14 +776,14 @@ async function printAndSave(){
 
 function deleteCurrent(){
  if(!currentBillId) return;
- if(!confirm("Delete this bill entirely? This returns sold stock amounts to inventory."));
+ if(!confirm("Delete this bill entirely? This returns sold stock amounts to inventory.")) return;
  
- const targetBill = allBills.find(b => b.id === currentBillId);
+ const targetBill = allBills.find(function(b) { return b.id === currentBillId; });
  if (targetBill) {
    totalReturnsAccumulator += (targetBill.grandTotal || 0);
    if (targetBill.items) {
-     targetBill.items.forEach(item => {
-       const stockItem = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
+     targetBill.items.forEach(function(item) {
+       const stockItem = inventory.find(function(inv) { return inv.name.toLowerCase() === item.name.toLowerCase(); });
        if (stockItem) {
          stockItem.quantity += (parseFloat(item.qty) || 0);
        }
@@ -750,22 +791,22 @@ function deleteCurrent(){
    }
  }
 
- allBills = allBills.filter(b=>b.id!==currentBillId);
+ allBills = allBills.filter(function(b) { return b.id !== currentBillId; });
  showSaveStatus("Updating cloud archives...");
- Promise.all([uploadInventoryToCloud(), uploadBillsToCloud()]).then(() => {
+ Promise.all([uploadInventoryToCloud(), uploadBillsToCloud()]).then(function() {
    currentBillId = null;
    showPage('dash');
  });
 }
 
 /* ═══════════════════════════════════════════
- FIXED DUAL TRACK PRICING AND LAYOUT ENGINE
+ INVOICE ROW RENDERER & DUAL-TRACK MATHEMATICS
 ═══════════════════════════════════════════ */
 function renderItems(){
  const body=document.getElementById('itemsBody');
  if (!body) return;
  body.innerHTML='';
- items.forEach((it,idx)=>{
+ items.forEach(function(it, idx){
    const taxMultiplier = 1 + (it.gstPct / 100);
    
    const unitPriceExclGst = it.price;
@@ -778,7 +819,6 @@ function renderItems(){
    const tr = document.createElement('tr');
    tr.dataset.idx = idx;
    
-   // FIXED SYNTAX BINDING: Completely re-mapped with clean un-broken variable injection strings
    tr.innerHTML = '<td>' + (idx + 1) + '</td>' +
      '<td>' +
        '<div class="name-cell-container">' +
@@ -802,25 +842,25 @@ function renderItems(){
 }
 
 function attachEditListeners(){
- document.querySelectorAll('#itemsBody tr').forEach(tr => {
+ document.querySelectorAll('#itemsBody tr').forEach(function(tr) {
    const idx = parseInt(tr.dataset.idx);
    const nameInput = tr.querySelector('.item-name-input');
    const suggestBox = tr.querySelector('.suggestion-box');
 
    if (!nameInput || !suggestBox) return;
 
-   nameInput.addEventListener('input', () => {
+   nameInput.addEventListener('input', function() {
      const rawText = nameInput.innerText || nameInput.textContent || '';
      const query = rawText.replace(/[\n\r\t]/g, '').replace(/\u00a0/g, ' ').trim().toLowerCase();
      
      if (!query) { suggestBox.style.display = 'none'; return; }
 
-     const matches = inventory.filter(i => i.name.toLowerCase().includes(query));
+     const matches = inventory.filter(function(i) { return i.name.toLowerCase().includes(query); });
 
      if (matches.length === 0) {
        suggestBox.innerHTML = '<div class="suggestion-item" style="color:#94a3b8;">No stock item found</div>';
      } else {
-       suggestBox.innerHTML = matches.map(match => {
+       suggestBox.innerHTML = matches.map(function(match) {
          const isOut = match.quantity <= 0;
          const incPrice = (match.sellingPrice || 0) * (1 + ((match.gstPct || 5) / 100));
          return '<div class="suggestion-item" data-name="' + match.name + '">' +
@@ -832,13 +872,13 @@ function attachEditListeners(){
      suggestBox.style.display = 'block';
    });
 
-   suggestBox.addEventListener('mousedown', e => {
+   suggestBox.addEventListener('mousedown', function(e) {
      e.preventDefault(); 
      const itemEl = e.target.closest('.suggestion-item');
      if (!itemEl || !itemEl.dataset.name) return;
 
      const targetName = itemEl.dataset.name;
-     const match = inventory.find(i => i.name === targetName);
+     const match = inventory.find(function(i) { return i.name === targetName; });
      
      if (match) {
        items[idx].name = match.name;
@@ -853,15 +893,15 @@ function attachEditListeners(){
      suggestBox.style.display = 'none';
    });
 
-   nameInput.addEventListener('blur', () => {
-     setTimeout(() => { suggestBox.style.display = 'none'; }, 200);
+   nameInput.addEventListener('blur', function() {
+     setTimeout(function() { suggestBox.style.display = 'none'; }, 200);
      const rawText = nameInput.innerText || nameInput.textContent || '';
      items[idx].name = rawText.replace(/[\n\r\t]/g, '').replace(/\u00a0/g, ' ').trim();
      autoSave();
    });
 
-   tr.querySelectorAll('[contenteditable]:not(.item-name-input)').forEach(cell => {
-     cell.addEventListener('blur', () => {
+   tr.querySelectorAll('[contenteditable]:not(.item-name-input)').forEach(function(cell) {
+     cell.addEventListener('blur', function() {
        const field = cell.dataset.field;
        let val = cell.textContent.trim();
        if (['qty', 'price', 'gstPct'].includes(field)) val = parseFloat(val.replace(/,/g, '')) || 0;
@@ -879,7 +919,7 @@ function recalcAll(){
    let tQty=0, tGst=0, tAmt=0, tTaxableTotal=0;
    let taxGroups = {};
 
-   items.forEach(it=>{
+   items.forEach(function(it){
      const tx = it.qty * it.price; 
      const g = tx * (it.gstPct / 100);
      tQty += it.qty; 
@@ -914,7 +954,7 @@ function recalcAll(){
 
    const tbb = document.getElementById('taxBreakBody');
    if (tbb) {
-     tbb.innerHTML = Object.keys(taxGroups).map(hsn => {
+     tbb.innerHTML = Object.keys(taxGroups).map(function(hsn) {
        const grp = taxGroups[hsn];
        const halfRate = grp.rate / 2;
        const halfTax = grp.taxAmt / 2;
@@ -952,8 +992,8 @@ function numberToWordsRupees(num){
  return p.join(' ')+' Rupees';
 }
 
-const fmt = n=>(Math.round((n+Number.EPSILON)*100)/100).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
-const fmtINR = n=>'₹'+(Math.round((n+Number.EPSILON)*100)/100).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0});
+const fmt = function(n){ return (Math.round((n+Number.EPSILON)*100)/100).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+const fmtINR = function(n){ return '₹'+(Math.round((n+Number.EPSILON)*100)/100).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0}); };
 
 document.getElementById('received')?.addEventListener('input', recalcAll);
 document.getElementById('invoicePage')?.addEventListener('input', autoSave);
@@ -978,14 +1018,15 @@ async function lookupGstin(gstin,type){
  }
  }catch(e){}
 }
-document.getElementById('billToGstin')?.addEventListener('blur',e=>lookupGstin(e.target.textContent,'billTo'));
-document.getElementById('sellerGstin')?.addEventListener('blur',e=>lookupGstin(e.target.textContent,'seller'));
+document.getElementById('billToGstin')?.addEventListener('blur',function(e){ lookupGstin(e.target.textContent,'billTo'); });
+document.getElementById('sellerGstin')?.addEventListener('blur',function(e){ lookupGstin(e.target.textContent,'seller'); });
 
 function syncPaymentModePrint(){
  const s=document.getElementById('paymentMode'),p=document.getElementById('paymentModePrint');
  if(s&&p) p.textContent=s.value;
 }
 
+// Initial Boot Strapping Bootstraps
 fetchBillsFromCloud();
 fetchInventoryFromCloud();
 showPage('dash');

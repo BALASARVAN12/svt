@@ -468,6 +468,9 @@ function calcFormAllPrices() {
   document.getElementById('invSellInclusive').value = inclusiveSell ? '₹' + inclusiveSell.toFixed(2) : '';
 }
 
+/* ═══════════════════════════════════════════
+ UPGRADED INVENTORY UI WITH INLINE EDITORS
+═══════════════════════════════════════════ */
 function renderInventoryGrid() {
   const tbody = document.getElementById('inventoryBody');
   if(!tbody) return;
@@ -483,20 +486,36 @@ function renderInventoryGrid() {
     return '<tr>' +
       '<td><b>' + it.name + '</b></td>' +
       '<td>' + (it.hsn || '—') + '</td>' +
-      '<td><span style="font-size:14px; font-weight:bold;">' + it.quantity + '</span></td>' +
+      '<td><span contenteditable="true" class="edit-inv-cell" data-idx="' + idx + '" data-field="quantity" style="font-size:14px; font-weight:bold; border-bottom:1px dotted #888;">' + it.quantity + '</span></td>' +
       '<td>' + it.unit + '</td>' +
-      '<td>₹' + baseCost.toFixed(2) + '</td>' +
+      '<td>₹<span contenteditable="true" class="edit-inv-cell" data-idx="' + idx + '" data-field="costPrice" style="border-bottom:1px dotted #888;">' + baseCost.toFixed(2) + '</span></td>' +
       '<td style="color:#475569; font-weight:600;">₹' + inclusiveCost.toFixed(2) + '</td>' +
-      '<td>₹' + baseSell.toFixed(2) + '</td>' +
+      '<td>₹<span contenteditable="true" class="edit-inv-cell" data-idx="' + idx + '" data-field="sellingPrice" style="border-bottom:1px dotted #888;">' + baseSell.toFixed(2) + '</span></td>' +
       '<td style="color:#1e3a8a; font-weight:bold;">₹' + inclusiveSell.toFixed(2) + '</td>' +
       '<td>' + it.gstPct + '%</td>' +
       '<td><span class="stock-status ' + (isOut ? 'stock-out' : 'stock-in') + '">' + (isOut ? 'OUT OF STOCK' : 'AVAILABLE') + '</span></td>' +
       '<td><button class="btn btn-danger btn-sm" onclick="removeInventoryItem(' + idx + ')">✕ Remove</button></td>' +
     '</tr>';
   }).join('');
+  
+  // Attach immediate blur event listeners to table text boxes for direct saving
+  document.querySelectorAll('.edit-inv-cell').forEach(cell => {
+    cell.addEventListener('blur', () => {
+      const idx = parseInt(cell.dataset.idx);
+      const field = cell.dataset.field;
+      let val = parseFloat(cell.textContent.replace(/,/g, '')) || 0;
+      
+      inventory[idx][field] = val;
+      uploadInventoryToCloud().then(() => {
+        renderInventoryGrid();
+      });
+    });
+  });
+  
   renderDashboard();
 }
 
+/* SMART DUPLICATE ROW MERGER LAUNCH ENGINE */
 function addInventoryItem() {
   const name = document.getElementById('invName').value.trim();
   const hsn = document.getElementById('invHsn').value.trim();
@@ -508,7 +527,22 @@ function addInventoryItem() {
 
   if(!name) { alert("Product name required"); return; }
   
-  inventory.push({ name, hsn, quantity: qty, unit, costPrice, sellingPrice, gstPct });
+  // Check if item already exists in the catalog
+  const match = inventory.find(i => i.name.toLowerCase() === name.toLowerCase());
+  
+  if (match) {
+    // Merge: Sum quantities together and update variables cleanly
+    match.quantity += qty;
+    match.hsn = hsn;
+    match.costPrice = costPrice;
+    match.sellingPrice = sellingPrice;
+    match.gstPct = gstPct;
+    match.unit = unit;
+  } else {
+    // Add new unique item row entry
+    inventory.push({ name, hsn, quantity: qty, unit, costPrice, sellingPrice, gstPct });
+  }
+  
   uploadInventoryToCloud().then(() => {
     renderInventoryGrid();
   });
@@ -540,9 +574,6 @@ function showPage(page){
 }
 function goToDashboard(){ showPage('dash'); }
 
-/* ═══════════════════════════════════════════
- REBUILT SAFE DASHBOARD LAYOUT ENGINE
-═══════════════════════════════════════════ */
 function renderDashboard(){
  const q = (document.getElementById('searchInput').value||'').toLowerCase();
  let bills = [...allBills];
@@ -601,7 +632,6 @@ function renderDashboard(){
    bills = bills.filter(b=> (b.customerName||'').toLowerCase().includes(q) || (b.invoiceNo||'').toLowerCase().includes(q) );
  }
 
- // Re-stitched with clean standard string additions to bypass script parser breaks
  grid.innerHTML = bills.map(b => {
    const pm = b.paymentMode || 'Cash';
    return '<div class="bill-card">' +
@@ -738,7 +768,7 @@ async function printAndSave(){
 
 function deleteCurrent(){
  if(!currentBillId) return;
- if(!confirm("Delete this bill entirely? This returns sold stock amounts to inventory.")) return;
+ if(!confirm("Delete this bill entirely? This returns sold stock amounts to inventory."));
  
  const targetBill = allBills.find(b => b.id === currentBillId);
  if (targetBill) {
@@ -762,7 +792,7 @@ function deleteCurrent(){
 }
 
 /* ═══════════════════════════════════════════
- ITEMS TABLE AND TAX RENDERING MODULES
+ ITEMS ENTRY TABLES
 ═══════════════════════════════════════════ */
 function renderItems(){
  const body=document.getElementById('itemsBody');
@@ -791,7 +821,7 @@ function renderItems(){
      '<td class="num" contenteditable="true" data-field="qty">' + it.qty + '</td>' +
      '<td class="center" contenteditable="true" data-field="unit">' + it.unit + '</td>' +
      '<td class="num" contenteditable="true" data-field="price">' + fmt(unitPriceExclGst) + '</td>' +
-     '<td class="num" style="color: #475569; font-weight: 500;">单元₹' + fmt(unitPriceInclGst) + '</td>' +
+     '<td class="num" style="color: #475569; font-weight: 500;">₹' + fmt(unitPriceInclGst) + '</td>' +
      '<td class="num">₹' + fmt(rowGstTotalAmt) + ' (' + it.gstPct + '%)</td>' +
      '<td class="num" style="background: #fafafa;">₹' + fmt(rowAmountExclGst) + '</td>' +
      '<td class="num" style="background: #f8fafc; font-weight: bold; color: #1e3a8a;">₹' + fmt(rowAmountInclGst) + '</td>' +

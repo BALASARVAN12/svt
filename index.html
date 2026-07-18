@@ -121,7 +121,6 @@ table.items thead th{border-top:1.5px solid var(--line);border-bottom:1.5px soli
 table.items td.num,table.items th.num{text-align:right;}
 table.items td.center,table.items th.center{text-align:center;}
 
-/* Dual Pricing Column Track Matrices Layout */
 table.items col.col-idx{width:4%;} table.items col.col-name{width:22%;}
 table.items col.col-hsn{width:10%;} table.items col.col-qty{width:8%;}
 table.items col.col-unit{width:6%;}table.items col.col-price{width:11%;}
@@ -456,9 +455,6 @@ async function uploadInventoryToCloud() {
   }
 }
 
-/* ═══════════════════════════════════════════
- INVENTORY ENGINE MANAGEMENT 
-═══════════════════════════════════════════ */
 function calcFormAllPrices() {
   const gstPct = parseFloat(document.getElementById('invGst').value) || 0;
   const taxMultiplier = 1 + (gstPct / 100);
@@ -544,9 +540,6 @@ function showPage(page){
 }
 function goToDashboard(){ showPage('dash'); }
 
-/* ═══════════════════════════════════════════
- METRICS ANALYTICS PANEL DESIGN 
-═══════════════════════════════════════════ */
 function renderDashboard(){
  const q = (document.getElementById('searchInput').value||'').toLowerCase();
  let bills = [...allBills];
@@ -646,9 +639,6 @@ function confirmDelete(id){
  });
 }
 
-/* ═══════════════════════════════════════════
- INVOICE RECORD MANAGERS
-═══════════════════════════════════════════ */
 function startNewInvoice(){
  currentBillId = 'bill_'+Date.now();
  items=[{name:'',hsn:'',qty:1,unit:'Kg',price:0,gstPct:5}];
@@ -707,21 +697,28 @@ function showSaveStatus(msg){
   if (el) el.textContent = msg; 
 }
 
+/* ═══════════════════════════════════════════
+ CRITICAL STOCK TRANSACTION FIX ENGINE
+═══════════════════════════════════════════ */
 async function printAndSave(){
+ // 1. Pre-validate stock levels across all added lines
  for (let item of items) {
+   if (!item.name) continue;
    const stockItem = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
    if (stockItem) {
-     if (stockItem.quantity < item.qty) {
+     if (stockItem.quantity < (parseFloat(item.qty) || 0)) {
        alert(`Cannot finalize invoice! "${item.name}" has only ${stockItem.quantity} left in stock.`);
        return;
      }
    }
  }
 
+ // 2. Deduct quantities from your available stock tracking profile array
  items.forEach(item => {
+   if (!item.name) continue;
    const stockItem = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
    if (stockItem) {
-     stockItem.quantity = Math.max(0, stockItem.quantity - item.qty);
+     stockItem.quantity = Math.max(0, stockItem.quantity - (parseFloat(item.qty) || 0));
    }
  });
 
@@ -731,6 +728,7 @@ async function printAndSave(){
  const idx = allBills.findIndex(b=>b.id===bill.id);
  if(idx>=0) allBills[idx]=bill; else allBills.unshift(bill);
  
+ // 3. Pushes changes together AND forces the application array to lock
  try {
    await uploadInventoryToCloud();
    await uploadBillsToCloud();
@@ -766,7 +764,7 @@ function deleteCurrent(){
 }
 
 /* ═══════════════════════════════════════════
- DUAL-COLUMN GRID TRACK IMPLEMENTATION
+ ITEMS ENTRY MATRIX & AUTO-TAX BUILDER
 ═══════════════════════════════════════════ */
 function renderItems(){
  const body=document.getElementById('itemsBody');
@@ -881,15 +879,12 @@ function attachEditListeners(){
 function addItemRow(){ items.push({name:'',hsn:'',qty:1,unit:'Kg',price:0,gstPct:5}); renderItems(); }
 function deleteRow(idx){ items.splice(idx,1); renderItems(); }
 
-/* ═══════════════════════════════════════════
- SYNCHRONIZED RECALCULATION & TAX DISTRIBUTION ENGINE
-═══════════════════════════════════════════ */
 function recalcAll(){
    let tQty=0, tGst=0, tAmt=0, tTaxableTotal=0;
    let taxGroups = {};
 
    items.forEach(it=>{
-     const tx = it.qty * it.price; // Base amount exclude GST
+     const tx = it.qty * it.price; 
      const g = tx * (it.gstPct / 100);
      tQty += it.qty; 
      tGst += g; 
@@ -921,7 +916,6 @@ function recalcAll(){
      document.getElementById('amtWords').textContent=' ('+numberToWordsRupees(Math.round(tAmt))+' only)';
    }
 
-   // FIXED: Re-mapped tax table rendering pipeline to cleanly group your dual prices by HSN code
    const tbb = document.getElementById('taxBreakBody');
    if (tbb) {
      tbb.innerHTML = Object.keys(taxGroups).map(hsn => {

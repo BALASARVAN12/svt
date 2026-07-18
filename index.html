@@ -93,10 +93,10 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 .bill-to .state-row .lbl{font-weight:normal;}
 .bill-to .state-row .val{font-weight:bold;}
 
-/* Item Name position container for dropdown positioning */
+/* Dropdown Alignment Target */
 .name-cell-container{position:relative;}
 
-/* ─── SUGGESTION DROPDOWN BOX ─── */
+/* ─── SUGGESTION DROPDOWN MODULE ─── */
 .suggestion-box{
   position:absolute;top:100%;left:0;width:100%;background:#fff;
   border:1px solid #cbd5e1;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.1);
@@ -148,7 +148,7 @@ table.taxbreak tr.total-row td{font-weight:bold;border-top:1.5px solid var(--lin
 [contenteditable="true"]:focus{background:#fff7cc;box-shadow:0 0 0 1px #e0c200;}
 .add-row-btn{margin:8px 14px;background:#16a34a;color:#fff;border:none;padding:6px 12px;border-radius:5px;font-size:12px;cursor:pointer;font-weight:600;}
 
-/* ─── INVENTORY UI MODULE ─── */
+/* ─── INVENTORY STOCK TABLE UI ─── */
 table.inventory-table{width:100%;max-width:960px;margin:20px auto;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);}
 table.inventory-table th, table.inventory-table td{padding:12px 16px;text-align:left;border-bottom:1px solid #e2e8f0;font-size:13px;}
 table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
@@ -358,7 +358,7 @@ table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
 
 <script>
 /* ═══════════════════════════════════════════
- DUAL ENGINE CLOUD CORE LAYOUT
+ DUAL ENGINE NON-BLOCKING BACKEND LOGIC
 ═══════════════════════════════════════════ */
 let allBills = []; 
 let inventory = [];
@@ -366,27 +366,38 @@ let currentBillId = null;
 let items = [];
 let autoSaveTimer = null;
 
-// Download Shared Bills
+// Download Bills cleanly with strict validation handling
 async function fetchBillsFromCloud() {
-  showSaveStatus('Syncing database items…');
+  const el = document.getElementById('saveStatus');
+  if (el) el.textContent = 'Syncing database items...';
   try {
     const res = await fetch('/api/bills', { method: "GET" });
+    if (!res.ok) throw new Error();
     const data = await res.json();
-    if (res.ok && Array.isArray(data)) allBills = data;
-  } catch (e) { showSaveStatus('⚠️ Sync Offline'); }
+    if (Array.isArray(data)) {
+      allBills = data;
+      if (el) el.textContent = '✓ Connected';
+    }
+  } catch (e) { 
+    if (el) el.textContent = '⚠️ Bills Offline'; 
+  }
   renderDashboard();
 }
 
-// Download Active Inventory Records
+// Download Stock Records cleanly without locking UI pipeline
 async function fetchInventoryFromCloud() {
   try {
     const res = await fetch('/api/bills?type=inventory', { method: "GET" });
+    if (!res.ok) throw new Error();
     const data = await res.json();
-    if (res.ok && Array.isArray(data)) {
+    if (Array.isArray(data)) {
       inventory = data;
       renderInventoryGrid();
     }
-  } catch(e) { console.error("Inventory error", e); }
+  } catch(e) { 
+    const el = document.getElementById('saveStatus');
+    if (el) el.textContent = '⚠️ Inventory Offline';
+  }
 }
 
 async function uploadBillsToCloud() {
@@ -407,11 +418,11 @@ async function uploadInventoryToCloud() {
       body: JSON.stringify(inventory)
     });
     renderInventoryGrid();
-  } catch (e) { alert("Stock update failed to push to serverless handler."); }
+  } catch (e) { alert("Stock update failed."); }
 }
 
 /* ═══════════════════════════════════════════
- INVENTORY LOGIC ENGINE
+ INVENTORY MANAGEMENT RENDER ENGINE
 ═══════════════════════════════════════════ */
 function renderInventoryGrid() {
   const tbody = document.getElementById('inventoryBody');
@@ -444,7 +455,6 @@ function addInventoryItem() {
   inventory.push({ name, hsn, quantity: qty, unit, price, gstPct });
   uploadInventoryToCloud();
 
-  // Clear inputs
   document.getElementById('invName').value = '';
   document.getElementById('invHsn').value = '';
   document.getElementById('invQty').value = '';
@@ -452,13 +462,13 @@ function addInventoryItem() {
 }
 
 function removeInventoryItem(idx) {
-  if(!confirm("Remove item type from stock logs?")) return;
+  if(!confirm("Remove item from stock?")) return;
   inventory.splice(idx, 1);
   uploadInventoryToCloud();
 }
 
 /* ═══════════════════════════════════════════
- NAVIGATION & ROUTING MAPPING
+ APPLICATION SCREEN ROUTING MAPS
 ═══════════════════════════════════════════ */
 function showPage(page){
  document.getElementById('dashPage').classList.toggle('hidden', page!=='dash');
@@ -471,7 +481,7 @@ function showPage(page){
 function goToDashboard(){ showPage('dash'); }
 
 /* ═══════════════════════════════════════════
- DASHBOARD DATA VIEW
+ DASHBOARD DATA OPERATIONS
 ═══════════════════════════════════════════ */
 function fmtINR(n){
  return '₹'+(Math.round((n+Number.EPSILON)*100)/100).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0});
@@ -527,7 +537,7 @@ function confirmDelete(id){
 }
 
 /* ═══════════════════════════════════════════
- INVOICE COMPILER ENGINE
+ INVOICE BUILD ENGINE
 ═══════════════════════════════════════════ */
 function startNewInvoice(){
  currentBillId = 'bill_'+Date.now();
@@ -578,14 +588,14 @@ function autoSave(){
 function showSaveStatus(msg){ document.getElementById('saveStatus').textContent = msg; }
 
 /* ═══════════════════════════════════════════
- DEDUCT STOCK + PRINT ENGINE
+ STOCK DEDUCTIONS CONTROLLER
 ═══════════════════════════════════════════ */
 async function printAndSave(){
  for (let item of items) {
    const stockItem = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
    if (stockItem) {
      if (stockItem.quantity < item.qty) {
-       alert(`Cannot finalize invoice! "${item.name}" has only ${stockItem.quantity} left in stock (You requested ${item.qty}).`);
+       alert(`Cannot finalize invoice! "${item.name}" has only ${stockItem.quantity} left in stock.`);
        return;
      }
    }
@@ -598,7 +608,7 @@ async function printAndSave(){
    }
  });
 
- showSaveStatus("Syncing item volumes globally...");
+ showSaveStatus("Syncing stock volumes globally...");
  await uploadInventoryToCloud(); 
  
  const bill = collectBillData();
@@ -610,7 +620,7 @@ async function printAndSave(){
 }
 
 /* ═══════════════════════════════════════════
- ITEMS MANAGEMENT CONTEXT
+ INLINE EDITORS & DROP SEARCH INJECTION
 ═══════════════════════════════════════════ */
 const fmt = n=>(Math.round((n+Number.EPSILON)*100)/100).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
 
@@ -650,29 +660,28 @@ function attachEditListeners(){
 
    if (!nameInput || !suggestBox) return;
 
-   // Handle real-time dropdown population on typing
+   // Dropdown search builder loop
    nameInput.addEventListener('input', () => {
      const query = nameInput.textContent.trim().toLowerCase();
      if (!query) { suggestBox.style.display = 'none'; return; }
 
-     // Filter items from cloud stock inventory
      const matches = inventory.filter(i => i.name.toLowerCase().includes(query));
 
      if (matches.length === 0) {
-       suggestBox.innerHTML = `<div class="suggestion-item" style="color:#94a3b8;">No matching stock found</div>`;
+       suggestBox.innerHTML = `<div class="suggestion-item" style="color:#94a3b8;">No stock profile found</div>`;
      } else {
        suggestBox.innerHTML = matches.map(match => {
          const isOut = match.quantity <= 0;
          return `<div class="suggestion-item" data-name="${match.name}">
            <span>${match.name}</span>
-           <span class="item-stock ${isOut ? 'out':''}">${isOut ? 'Out of Stock' : `${match.quantity} ${match.unit} left`}</span>
+           <span class="item-stock ${isOut ? 'out':''}">${isOut ? 'Out of Stock' : `${match.quantity} ${match.unit} available`}</span>
          </div>`;
        }).join('');
      }
      suggestBox.style.display = 'block';
    });
 
-   // Handle option selections from the dropdown list
+   // Handle click interactions on menu options
    suggestBox.addEventListener('click', e => {
      const itemEl = e.target.closest('.suggestion-item');
      if (!itemEl || !itemEl.dataset.name) return;
@@ -691,9 +700,7 @@ function attachEditListeners(){
      suggestBox.style.display = 'none';
    });
 
-   // Sync remaining numerical and custom fields on blur
    nameInput.addEventListener('blur', () => {
-     // Delay hiding dropdown so clicks register first
      setTimeout(() => { suggestBox.style.display = 'none'; }, 250);
      items[idx].name = nameInput.textContent.trim();
      autoSave();
@@ -725,12 +732,12 @@ function recalcAll(){
  document.getElementById('totAmt').textContent='₹'+fmt(tAmt);
  document.getElementById('subTotal').textContent=fmt(tAmt);
  document.getElementById('grandTotal').textContent=fmt(tAmt);
- const r = parseFloat(document.getElementById('received').textContent.replace(/,/g,''))||0;
+ const r = parseFloat((document.getElementById('received')?.textContent || '0').replace(/,/g,''))||0;
  document.getElementById('balance').textContent=fmt(Math.max(0, tAmt - r));
  autoSave();
 }
 
-// Global Document Node Listeners (Null-Safe)
+// Global Document Node Observers (Null-Safe)
 document.getElementById('received')?.addEventListener('input', recalcAll);
 document.getElementById('invoicePage')?.addEventListener('input', autoSave);
 
@@ -758,18 +765,14 @@ async function lookupGstin(gstin,type){
 document.getElementById('billToGstin')?.addEventListener('blur',e=>lookupGstin(e.target.textContent,'billTo'));
 document.getElementById('sellerGstin')?.addEventListener('blur',e=>lookupGstin(e.target.textContent,'seller'));
 
-/* ═══════════════════════════════════════════
- PAYMENT MODE SYNC
-═══════════════════════════════════════════ */
 function syncPaymentModePrint(){
  const s=document.getElementById('paymentMode'),p=document.getElementById('paymentModePrint');
  if(s&&p) p.textContent=s.value;
 }
 
-/* ═══════════════════════════════════════════
- INIT
-═══════════════════════════════════════════ */
+// Initialize Application Pipeline Context
 fetchBillsFromCloud();
+fetchInventoryFromCloud();
 showPage('dash');
 </script>
 </body>

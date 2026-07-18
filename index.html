@@ -92,9 +92,27 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 .bill-to .state-row{display:flex;gap:6px;font-size:11.5px;}
 .bill-to .state-row .lbl{font-weight:normal;}
 .bill-to .state-row .val{font-weight:bold;}
+
+/* Item Name position container for dropdown positioning */
+.name-cell-container{position:relative;}
+
+/* ─── SUGGESTION DROPDOWN BOX ─── */
+.suggestion-box{
+  position:absolute;top:100%;left:0;width:100%;background:#fff;
+  border:1px solid #cbd5e1;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.1);
+  z-index:999;max-height:200px;overflow-y:auto;display:none;margin-top:2px;
+}
+.suggestion-item{
+  padding:8px 12px;cursor:pointer;font-size:12px;
+  display:flex;justify-content:space-between;border-bottom:1px solid #f1f5f9;
+}
+.suggestion-item:hover{background:#f1f5f9;}
+.suggestion-item .item-stock{font-weight:bold;color:#16a34a;}
+.suggestion-item .item-stock.out{color:#dc2626;}
+
 table.items{width:100%;border-collapse:collapse;font-size:11.5px;table-layout:fixed;}
 table.items th,table.items td{border-bottom:1px solid var(--line-light);padding:5px 6px;text-align:left;vertical-align:top;white-space:nowrap;overflow:hidden;}
-table.items td[data-field="name"],table.items th:nth-child(2){white-space:normal;word-wrap:break-word;overflow-wrap:break-word;}
+table.items td[data-field="name"],table.items th:nth-child(2){white-space:normal;word-wrap:break-word;overflow-wrap:break-word;overflow:visible;}
 table.items td.del-cell{overflow:visible;text-align:center;padding:5px 2px;}
 table.items thead th{border-top:1.5px solid var(--line);border-bottom:1.5px solid var(--line);font-weight:bold;background:var(--accent);}
 table.items td.num,table.items th.num{text-align:right;}
@@ -152,7 +170,7 @@ table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
  html,body{background:#fff;padding:0;margin:0;width:100%;}
  .page{max-width:100%;width:100%;border:1.5px solid var(--line);margin:0 auto;box-sizing:border-box;overflow:hidden;}
  table.items,table.taxbreak{width:100%!important;max-width:100%;}
- .row-del,.add-row-btn{display:none!important;}
+ .row-del,.add-row-btn, .suggestion-box{display:none!important;}
  .payment-mode-select{display:none!important;visibility:hidden!important;width:0!important;height:0!important;position:absolute!important;left:-9999px!important;}
  .payment-mode-print{display:inline!important;visibility:visible!important;}
  [contenteditable="true"]:hover,[contenteditable="true"]:focus{background:transparent;box-shadow:none;}
@@ -175,10 +193,10 @@ table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
  </div>
 
  <div class="dash-stats">
- <div class="stat-card"><div class="label">Total Bills</div><div class="value" id="statTotal">0[span_1](start_span)[span_1](end_span)</div></div>
- <div class="stat-card"><div class="label">This Month</div><div class="value" id="statMonth">0[span_2](start_span)[span_2](end_span)</div></div>
- <div class="stat-card"><div class="label">Total Revenue</div><div class="value" id="statRevenue">₹0[span_3](start_span)[span_3](end_span)</div></div>
- <div class="stat-card"><div class="label">Pending Balance</div><div class="value" id="statPending">₹0[span_4](start_span)[span_4](end_span)</div></div>
+ <div class="stat-card"><div class="label">Total Bills</div><div class="value" id="statTotal">0</div></div>
+ <div class="stat-card"><div class="label">This Month</div><div class="value" id="statMonth">0</div></div>
+ <div class="stat-card"><div class="label">Total Revenue</div><div class="value" id="statRevenue">₹0</div></div>
+ <div class="stat-card"><div class="label">Pending Balance</div><div class="value" id="statPending">₹0</div></div>
  </div>
 
  <div class="dash-controls">
@@ -235,25 +253,25 @@ table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
  <div class="title-bar" contenteditable="true" data-save="titleBar">Tax Invoice</div>
  <div class="top-section">
  <div class="seller-info">
- <div class="company-name" contenteditable="true" data-save="sellerName">SREE VALLI TRADERS[span_5](start_span)[span_5](end_span)</div>
- <div class="addr-line" contenteditable="true" data-save="sellerAddr">GROUND FLOOR 24-59-13 PEDAGANTYADA VINAYAKA NAGAR Visakhapatnam[span_6](start_span)[span_6](end_span)</div>
+ <div class="company-name" contenteditable="true" data-save="sellerName">SREE VALLI TRADERS</div>
+ <div class="addr-line" contenteditable="true" data-save="sellerAddr">GROUND FLOOR 24-59-13 PEDAGANTYADA VINAYAKA NAGAR Visakhapatnam</div>
  <div class="two-col">
  <div>
- <div class="kv-line"><span class="lbl">Phone:</span><span class="val" contenteditable="true" data-save="sellerPhone">7989088940[span_7](start_span)[span_7](end_span)</span></div>
- <div class="kv-line"><span class="lbl">GSTIN:</span><span class="val" contenteditable="true" id="sellerGstin" data-save="sellerGstin">37AJKPV2937N1ZB[span_8](start_span)[span_8](end_span)</span></div>
+ <div class="kv-line"><span class="lbl">Phone:</span><span class="val" contenteditable="true" data-save="sellerPhone">7989088940</span></div>
+ <div class="kv-line"><span class="lbl">GSTIN:</span><span class="val" contenteditable="true" id="sellerGstin" data-save="sellerGstin">37AJKPV2937N1ZB</span></div>
  </div>
  <div>
- <div class="kv-line"><span class="lbl">Email:</span><span class="val" contenteditable="true" data-save="sellerEmail">radhavudathu1971@gmail.com[span_9](start_span)[span_9](end_span)</span></div>
- <div class="kv-line"><span class="lbl">State:</span><span class="val" contenteditable="true" id="sellerState" data-save="sellerState">37-Andhra Pradesh[span_10](start_span)[span_10](end_span)</span></div>
+ <div class="kv-line"><span class="lbl">Email:</span><span class="val" contenteditable="true" data-save="sellerEmail">radhavudathu1971@gmail.com</span></div>
+ <div class="kv-line"><span class="lbl">State:</span><span class="val" contenteditable="true" id="sellerState" data-save="sellerState">37-Andhra Pradesh</span></div>
  </div>
  </div>
  </div>
  <div class="invoice-meta">
- <div class="kv-line"><span class="lbl">Invoice No.:</span><span class="val" contenteditable="true" id="invoiceNo" data-save="invoiceNo">1[span_11](start_span)[span_11](end_span)</span></div>
- <div class="kv-line"><span class="lbl">Date:</span><span class="val" contenteditable="true" id="invoiceDate" data-save="invoiceDate">01/01/2026[span_12](start_span)[span_12](end_span)</span></div>
+ <div class="kv-line"><span class="lbl">Invoice No.:</span><span class="val" contenteditable="true" id="invoiceNo" data-save="invoiceNo">1</span></div>
+ <div class="kv-line"><span class="lbl">Date:</span><span class="val" contenteditable="true" id="invoiceDate" data-save="invoiceDate">01/01/2026</span></div>
  <div class="kv-line" id="ewayRow"><span class="lbl">E-Way Bill No.:</span><span class="val" contenteditable="true" id="ewayBill" data-save="ewayBill"></span></div>
  <div class="kv-line" id="vanRow"><span class="lbl">Van No.:</span><span class="val" contenteditable="true" id="vanNo" data-save="vanNo"></span></div>
- <div class="kv-line"><span class="lbl">Place Of Supply:</span><span class="val" contenteditable="true" id="placeOfSupply" data-save="placeOfSupply">37-Andhra Pradesh[span_13](start_span)[span_13](end_span)</span></div>
+ <div class="kv-line"><span class="lbl">Place Of Supply:</span><span class="val" contenteditable="true" id="placeOfSupply" data-save="placeOfSupply">37-Andhra Pradesh</span></div>
  <div class="kv-line">
  <span class="lbl">Payment Mode:</span>
  <select class="payment-mode-select" id="paymentMode">
@@ -268,13 +286,13 @@ table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
 
  <div class="bill-to">
  <div class="section-label">Bill To:</div>
- <div class="customer-name" contenteditable="true" data-save="customerName">Customer Name[span_14](start_span)[span_14](end_span)</div>
- <div class="addr-line" contenteditable="true" data-save="customerAddr">Customer Address[span_15](start_span)[span_15](end_span)</div>
+ <div class="customer-name" contenteditable="true" data-save="customerName">Customer Name</div>
+ <div class="addr-line" contenteditable="true" data-save="customerAddr">Customer Address</div>
  <div class="state-row">
  <span class="lbl">State:</span>
- <span class="val" contenteditable="true" id="billToState" data-save="billToState">State[span_16](start_span)[span_16](end_span)</span>
+ <span class="val" contenteditable="true" id="billToState" data-save="billToState">State</span>
  <span class="lbl" style="margin-left:18px">GSTIN:</span>
- <span class="val" contenteditable="true" id="billToGstin" data-save="billToGstin">GSTIN[span_17](start_span)[span_17](end_span)</span>
+ <span class="val" contenteditable="true" id="billToGstin" data-save="billToGstin">GSTIN</span>
  </div>
  </div>
 
@@ -292,21 +310,21 @@ table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
  <tbody id="itemsBody"></tbody>
  <tfoot><tr class="total-row">
  <td colspan="3">Total</td>
- <td class="num" id="totQty">0[span_18](start_span)[span_18](end_span)</td><td></td><td></td>
- <td class="num" id="totGst">₹0.00[span_19](start_span)[span_19](end_span)</td>
- <td class="num" id="totAmt">₹0.00[span_20](start_span)[span_20](end_span)</td><td></td>
+ <td class="num" id="totQty">0</td><td></td><td></td>
+ <td class="num" id="totGst">₹0.00</td>
+ <td class="num" id="totAmt">₹0.00</td><td></td>
  </tr></tfoot>
  </table>
  <button class="add-row-btn" onclick="addItemRow()">+ Add Item Row</button>
 
  <div class="summary-bar">
  <div class="row">
- <div><span class="lbl">Sub Total: </span><span class="val">₹<span id="subTotal">0.00[span_21](start_span)[span_21](end_span)</span></span></div>
- <div><span class="lbl">Total: </span><span class="val">₹<span id="grandTotal">0.00[span_22](start_span)[span_22](end_span)</span></span><span id="amtWords"> (Zero Rupees only)[span_23](start_span)[span_23](end_span)</span></div>
+ <div><span class="lbl">Sub Total: </span><span class="val">₹<span id="subTotal">0.00</span></span></div>
+ <div><span class="lbl">Total: </span><span class="val">₹<span id="grandTotal">0.00</span></span><span id="amtWords"> (Zero Rupees only)</span></div>
  </div>
  <div class="row">
- <div><span class="lbl">Received: </span>₹<span class="val" contenteditable="true" id="received" data-save="received">0.00[span_24](start_span)[span_24](end_span)</span></div>
- <div><span class="lbl">Balance: </span>₹<span class="val" id="balance">0.00[span_25](start_span)[span_25](end_span)</span></div>
+ <div><span class="lbl">Received: </span>₹<span class="val" contenteditable="true" id="received" data-save="received">0.00</span></div>
+ <div><span class="lbl">Balance: </span>₹<span class="val" id="balance">0.00</span></div>
  </div>
  </div>
 
@@ -317,22 +335,22 @@ table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
  </thead>
  <tbody id="taxBreakBody"></tbody>
  <tfoot><tr class="total-row">
- <td class="left">TOTAL[span_26](start_span)[span_26](end_span)</td>
- <td id="tbTaxableTotal">0.00[span_27](start_span)[span_27](end_span)</td><td></td>
- <td id="tbCgstAmtTotal">0.00[span_28](start_span)[span_28](end_span)</td><td></td>
- <td id="tbSgstAmtTotal">0.00[span_29](start_span)[span_29](end_span)</td>
- <td id="tbTaxTotal">0.00[span_30](start_span)[span_30](end_span)</td>
+ <td class="left">TOTAL</td>
+ <td id="tbTaxableTotal">0.00</td><td></td>
+ <td id="tbCgstAmtTotal">0.00</td><td></td>
+ <td id="tbSgstAmtTotal">0.00</td>
+ <td id="tbTaxTotal">0.00</td>
  </tr></tfoot>
  </table>
 
  <div class="footer">
  <div>
  <div class="section-label">Terms &amp; Conditions:</div>
- <div contenteditable="true" data-save="terms">Thank you for doing business with us.[span_31](start_span)[span_31](end_span)</div>
+ <div contenteditable="true" data-save="terms">Thank you for doing business with us.</div>
  </div>
  <div>
- <div class="section-label" contenteditable="true" data-save="forLabel">For SREE VALLI TRADERS:[span_32](start_span)[span_32](end_span)</div>
- <div class="signature-area" contenteditable="true" data-save="signature">Authorized Signatory[span_33](start_span)[span_33](end_span)</div>
+ <div class="section-label" contenteditable="true" data-save="forLabel">For SREE VALLI TRADERS:</div>
+ <div class="signature-area" contenteditable="true" data-save="signature">Authorized Signatory</div>
  </div>
  </div>
  </div>
@@ -602,16 +620,14 @@ function renderItems(){
  items.forEach((it,idx)=>{
  const taxable = it.qty * it.price;
  const gst = taxable * (it.gstPct/100);
- const stockMatch = inventory.find(i => i.name.toLowerCase() === it.name.toLowerCase());
- const isInvalid = stockMatch && stockMatch.quantity < it.qty;
- const isOut = stockMatch && stockMatch.quantity <= 0;
 
  const tr=document.createElement('tr');
  tr.dataset.idx=idx;
  tr.innerHTML=`
  <td>${idx+1}</td>
- <td contenteditable="true" data-field="name" style="${isOut ? 'color: red; font-weight:bold;':''}">
-   ${it.name} ${isOut ? '⚠️ [OUT OF STOCK]' : isInvalid ? `⚠️ [ONLY ${stockMatch.quantity} LEFT]` : ''}
+ <td class="name-cell-container">
+   <div contenteditable="true" data-field="name" class="item-name-input">${it.name}</div>
+   <div class="suggestion-box" id="suggest-${idx}"></div>
  </td>
  <td contenteditable="true" data-field="hsn">${it.hsn}</td>
  <td class="num" contenteditable="true" data-field="qty">${it.qty}</td>
@@ -627,28 +643,71 @@ function renderItems(){
 }
 
 function attachEditListeners(){
- document.querySelectorAll('#itemsBody [contenteditable]').forEach(cell=>{
-  cell.addEventListener('blur', e => {
-    const tr=cell.closest('tr'), idx=parseInt(tr.dataset.idx), field=cell.dataset.field;
-    let val=cell.textContent.trim();
-    
-    if(field === 'name') {
-      const match = inventory.find(i => i.name.toLowerCase() === val.toLowerCase());
-      if(match) {
-        items[idx].name = match.name;
-        items[idx].hsn = match.hsn;
-        items[idx].price = match.price;
-        items[idx].gstPct = match.gstPct;
-        items[idx].unit = match.unit;
-        renderItems();
-        return;
-      }
-    }
+ document.querySelectorAll('#itemsBody tr').forEach(tr => {
+   const idx = parseInt(tr.dataset.idx);
+   const nameInput = tr.querySelector('.item-name-input');
+   const suggestBox = tr.querySelector('.suggestion-box');
 
-    if(['qty','price','gstPct'].includes(field)) val=parseFloat(val.replace(/,/g,''))||0;
-    items[idx][field]=val;
-    renderItems();
-  });
+   if (!nameInput || !suggestBox) return;
+
+   // Handle real-time dropdown population on typing
+   nameInput.addEventListener('input', () => {
+     const query = nameInput.textContent.trim().toLowerCase();
+     if (!query) { suggestBox.style.display = 'none'; return; }
+
+     // Filter items from cloud stock inventory
+     const matches = inventory.filter(i => i.name.toLowerCase().includes(query));
+
+     if (matches.length === 0) {
+       suggestBox.innerHTML = `<div class="suggestion-item" style="color:#94a3b8;">No matching stock found</div>`;
+     } else {
+       suggestBox.innerHTML = matches.map(match => {
+         const isOut = match.quantity <= 0;
+         return `<div class="suggestion-item" data-name="${match.name}">
+           <span>${match.name}</span>
+           <span class="item-stock ${isOut ? 'out':''}">${isOut ? 'Out of Stock' : `${match.quantity} ${match.unit} left`}</span>
+         </div>`;
+       }).join('');
+     }
+     suggestBox.style.display = 'block';
+   });
+
+   // Handle option selections from the dropdown list
+   suggestBox.addEventListener('click', e => {
+     const itemEl = e.target.closest('.suggestion-item');
+     if (!itemEl || !itemEl.dataset.name) return;
+
+     const targetName = itemEl.dataset.name;
+     const match = inventory.find(i => i.name === targetName);
+     
+     if (match) {
+       items[idx].name = match.name;
+       items[idx].hsn = match.hsn;
+       items[idx].price = match.price;
+       items[idx].gstPct = match.gstPct;
+       items[idx].unit = match.unit;
+       renderItems();
+     }
+     suggestBox.style.display = 'none';
+   });
+
+   // Sync remaining numerical and custom fields on blur
+   nameInput.addEventListener('blur', () => {
+     // Delay hiding dropdown so clicks register first
+     setTimeout(() => { suggestBox.style.display = 'none'; }, 250);
+     items[idx].name = nameInput.textContent.trim();
+     autoSave();
+   });
+
+   tr.querySelectorAll('[contenteditable]:not(.item-name-input)').forEach(cell => {
+     cell.addEventListener('blur', () => {
+       const field = cell.dataset.field;
+       let val = cell.textContent.trim();
+       if (['qty', 'price', 'gstPct'].includes(field)) val = parseFloat(val.replace(/,/g, '')) || 0;
+       items[idx][field] = val;
+       renderItems();
+     });
+   });
  });
 }
 

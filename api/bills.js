@@ -1,31 +1,51 @@
 // api/bills.js
 export default async function handler(req, res) {
-  // Grab the hidden keys from Vercel's secure environment
   const apiKey = process.env.JSONBIN_API_KEY;
-  const binId = process.env.SHARED_BIN_ID;
+  const billsBinId = process.env.SHARED_BIN_ID;
+  const inventoryBinId = process.env.INVENTORY_BIN_ID;
+  const gstApiKey = process.env.GSTINCHECK_API_KEY; // Securely pulled from server environment
 
-  if (!apiKey || !binId) {
-    return res.status(500).json({ error: "Server configuration missing keys." });
+  // Route 1: Handle secure server-side GSTIN lookup requests
+  if (req.query.gstin) {
+    if (!gstApiKey) {
+      return res.status(500).json({ error: "Server missing GST API configuration key." });
+    }
+    const targetGstin = req.query.gstin.trim().toUpperCase();
+    try {
+      const gstResponse = await fetch(`https://sheet.gstincheck.co.in/check/${gstApiKey}/${targetGstin}`);
+      const gstData = await gstResponse.json();
+      return res.status(200).json(gstData);
+    } catch (error) {
+      return res.status(500).json({ error: "Failed to query the live GST lookup service." });
+    }
   }
 
-  // Handle Dashboard Sync (GET request)
+  // Core configurations check for database operations
+  if (!apiKey || !billsBinId || !inventoryBinId) {
+    return res.status(500).json({ error: "Server configuration missing database keys." });
+  }
+
+  const isInventory = req.query.type === 'inventory';
+  const targetBinId = isInventory ? inventoryBinId : billsBinId;
+
+  // Route 2: Handle database fetches (GET)
   if (req.method === 'GET') {
     try {
-      const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+      const response = await fetch(`https://api.jsonbin.io/v3/b/${targetBinId}/latest`, {
         method: "GET",
         headers: { "X-Master-Key": apiKey }
       });
       const data = await response.json();
       return res.status(200).json(data.record || []);
     } catch (error) {
-      return res.status(500).json({ error: "Failed to fetch bills from cloud repository." });
+      return res.status(500).json({ error: "Failed to fetch cloud records." });
     }
   }
 
-  // Handle Save/Update/Delete (PUT request)
+  // Route 3: Handle database updates (PUT)
   if (req.method === 'PUT') {
     try {
-      const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+      const response = await fetch(`https://api.jsonbin.io/v3/b/${targetBinId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -44,5 +64,5 @@ export default async function handler(req, res) {
     }
   }
 
-  return res.status(45).json({ error: "Method not allowed" });
+  return res.status(405).json({ error: "Method not allowed" });
 }

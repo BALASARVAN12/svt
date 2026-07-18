@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Sree Valli Traders — Invoice Manager</title>
+<title>Sree Valli Traders — Invoice & Inventory Manager</title>
 <style>
 :root{
  --ink:#1a1a1a;--line:#333;--line-light:#888;--bg:#fff;--accent:#f4f4f4;
@@ -12,8 +12,8 @@
 body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);}
 
 /* ─── DASHBOARD ─── */
-#dashPage{display:block;padding:32px 24px;min-height:100vh;}
-#dashPage.hidden,#editorPage.hidden{display:none!important;}
+#dashPage, #inventoryPage{display:block;padding:32px 24px;min-height:100vh;}
+#dashPage.hidden,#editorPage.hidden,#inventoryPage.hidden{display:none!important;}
 #editorPage{display:block;}
 
 .dash-header{max-width:960px;margin:0 auto 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
@@ -54,6 +54,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 .badge.cash{background:#dcfce7;color:#166534;}
 .badge.credit{background:#fef9c3;color:#854d0e;}
 .badge.upi{background:#e0f2fe;color:#0369a1;}
+.badge.danger{background:#fee2e2;color:#991b1b;}
 .bill-card-actions{display:flex;gap:6px;}
 .no-bills{max-width:960px;margin:40px auto;text-align:center;color:#9ca3af;padding:60px 0;}
 .no-bills h3{font-size:20px;margin-bottom:8px;color:#6b7280;}
@@ -129,12 +130,22 @@ table.taxbreak tr.total-row td{font-weight:bold;border-top:1.5px solid var(--lin
 [contenteditable="true"]:focus{background:#fff7cc;box-shadow:0 0 0 1px #e0c200;}
 .add-row-btn{margin:8px 14px;background:#16a34a;color:#fff;border:none;padding:6px 12px;border-radius:5px;font-size:12px;cursor:pointer;font-weight:600;}
 
+/* ─── INVENTORY UI MODULE ─── */
+table.inventory-table{width:100%;max-width:960px;margin:20px auto;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+table.inventory-table th, table.inventory-table td{padding:12px 16px;text-align:left;border-bottom:1px solid #e2e8f0;font-size:13px;}
+table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
+.inventory-form{max-width:960px;margin:0 auto 20px;background:#fff;padding:20px;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);display:flex;gap:10px;flex-wrap:wrap;}
+.inventory-form input{padding:8px 12px;border:1.5px solid #d1d5db;border-radius:6px;font-size:13px;flex:1;min-width:120px;}
+.stock-status{font-weight:bold;padding:2px 6px;border-radius:4px;font-size:11px;}
+.stock-in{background:#dcfce7;color:#166534;}
+.stock-out{background:#fee2e2;color:#991b1b;}
+
 /* hidden eway/van rows on print */
-.eway-row.empty-print, .van-row.empty-print{ /* handled by JS adding class */ }
+.eway-row.empty-print, .van-row.empty-print{ }
 
 /* ─── PRINT ─── */
 @media print{
- #dashPage{display:none!important;}
+ #dashPage, #inventoryPage{display:none!important;}
  .toolbar{display:none!important;}
  #editorPage{display:block!important;}
  @page{size:A4;margin:14mm 12mm;}
@@ -156,17 +167,18 @@ table.taxbreak tr.total-row td{font-weight:bold;border-top:1.5px solid var(--lin
 <!-- ═══════════════════ DASHBOARD PAGE ═══════════════════ -->
 <div id="dashPage">
  <div class="dash-header">
- <div class="dash-title">🧾 <span>Sree Valli Traders</span> — Shared Invoice Manager</div>
+ <div class="dash-title">🧾 <span>Sree Valli Traders</span> — Shared Manager</div>
  <div class="dash-actions">
  <button class="btn btn-primary" onclick="startNewInvoice()">+ New Bill</button>
+ <button class="btn btn-secondary" onclick="showPage('inventory')">📦 Manage Inventory</button>
  </div>
  </div>
 
  <div class="dash-stats">
- <div class="stat-card"><div class="label">Total Bills</div><div class="value" id="statTotal">0</div></div>
- <div class="stat-card"><div class="label">This Month</div><div class="value" id="statMonth">0</div></div>
- <div class="stat-card"><div class="label">Total Revenue</div><div class="value" id="statRevenue">₹0</div></div>
- <div class="stat-card"><div class="label">Pending Balance</div><div class="value" id="statPending">₹0</div></div>
+ <div class="stat-card"><div class="label">Total Bills</div><div class="value" id="statTotal">0[span_1](start_span)[span_1](end_span)</div></div>
+ <div class="stat-card"><div class="label">This Month</div><div class="value" id="statMonth">0[span_2](start_span)[span_2](end_span)</div></div>
+ <div class="stat-card"><div class="label">Total Revenue</div><div class="value" id="statRevenue">₹0[span_3](start_span)[span_3](end_span)</div></div>
+ <div class="stat-card"><div class="label">Pending Balance</div><div class="value" id="statPending">₹0[span_4](start_span)[span_4](end_span)</div></div>
  </div>
 
  <div class="dash-controls">
@@ -181,41 +193,67 @@ table.taxbreak tr.total-row td{font-weight:bold;border-top:1.5px solid var(--lin
  </div>
 </div>
 
+<!-- ═══════════════════ INVENTORY PAGE ═══════════════════ -->
+<div id="inventoryPage" class="hidden">
+ <div class="dash-header">
+ <div class="dash-title">📦 <span>Inventory Stock</span> Control Center</div>
+ <div class="dash-actions">
+ <button class="btn btn-secondary" onclick="showPage('dash')">← Back to Bills</button>
+ </div>
+ </div>
+
+ <div class="inventory-form">
+ <input type="text" id="invName" placeholder="Item Name">
+ <input type="text" id="invHsn" placeholder="HSN Code">
+ <input type="number" id="invQty" placeholder="Initial Quantity (Stock)">
+ <input type="text" id="invUnit" placeholder="Unit (e.g. Kg, Pcs)">
+ <input type="number" id="invPrice" placeholder="Price/Unit (₹)">
+ <input type="number" id="invGst" placeholder="GST Rate (%)" value="5">
+ <button class="btn btn-success" onclick="addInventoryItem()">+ Add to Stock</button>
+ </div>
+
+ <table class="inventory-table">
+ <thead>
+   <tr><th>Item Name</th><th>HSN</th><th>Available Stock</th><th>Unit</th><th>Base Price</th><th>GST</th><th>Status</th><th>Actions</th></tr>
+ </thead>
+ <tbody id="inventoryBody"></tbody>
+ </table>
+</div>
+
 <!-- ═══════════════════ EDITOR PAGE ═══════════════════ -->
 <div id="editorPage" class="hidden">
  <div class="toolbar">
  <button onclick="goToDashboard()">← Dashboard</button>
- <button class="success" onclick="printAndSave()">🖨️ Print / Save PDF</button>
+ <button class="success" onclick="printAndSave()">🖨️ Print / Deduct Stock</button>
  <button class="secondary" onclick="addItemRow()">+ Add Row</button>
  <button class="secondary" onclick="recalcAll()">↻ Recalc</button>
  <button class="danger" onclick="deleteCurrent()">🗑 Delete Bill</button>
  <span class="save-status" id="saveStatus">✓ Connected</span>
- <span class="hint">Global Sharing Mode • Typing auto-syncs live to everyone</span>
  </div>
 
  <div class="page" id="invoicePage">
  <div class="title-bar" contenteditable="true" data-save="titleBar">Tax Invoice</div>
  <div class="top-section">
  <div class="seller-info">
- <div class="company-name" contenteditable="true" data-save="sellerName">SREE VALLI TRADERS</div>
- <div class="addr-line" contenteditable="true" data-save="sellerAddr">GROUND FLOOR 24-59-13 PEDAGANTYADA VINAYAKA NAGAR Visakhapatnam</div>
+ <div class="company-name" contenteditable="true" data-save="sellerName">SREE VALLI TRADERS[span_5](start_span)[span_5](end_span)</div>
+ <div class="addr-line" contenteditable="true" data-save="sellerAddr">GROUND FLOOR 24-59-13 PEDAGANTYADA VINAYAKA NAGAR Visakhapatnam[span_6](start_span)[span_6](end_span)</div>
  <div class="two-col">
  <div>
- <div class="kv-line"><span class="lbl">Phone:</span><span class="val" contenteditable="true" data-save="sellerPhone">7989088940</span></div>
- <div class="kv-line"><span class="lbl">GSTIN:</span><span class="val" contenteditable="true" id="sellerGstin" data-save="sellerGstin">37AJKPV2937N1ZB</span></div>
+ <div class="kv-line"><span class="lbl">Phone:</span><span class="val" contenteditable="true" data-save="sellerPhone">7989088940[span_7](start_span)[span_7](end_span)</span></div>
+ <div class="kv-line"><span class="lbl">GSTIN:</span><span class="val" contenteditable="true" id="sellerGstin" data-save="sellerGstin">37AJKPV2937N1ZB[span_8](start_span)[span_8](end_span)</span></div>
  </div>
  <div>
- <div class="kv-line"><span class="lbl">Email:</span><span class="val" contenteditable="true" data-save="sellerEmail">radhavudathu1971@gmail.com</span></div>
- <div class="kv-line"><span class="lbl">State:</span><span class="val" contenteditable="true" id="sellerState" data-save="sellerState">37-Andhra Pradesh</span></div>
+ <div class="kv-line"><span class="lbl">Email:</span><span class="val" contenteditable="true" data-save="sellerEmail">radhavudathu1971@gmail.com[span_9](start_span)[span_9](end_span)</span></div>
+ <div class="kv-line"><span class="lbl">State:</span><span class="val" contenteditable="true" id="sellerState" data-save="sellerState">37-Andhra Pradesh[span_10](start_span)[span_10](end_span)</span></div>
  </div>
  </div>
  </div>
  <div class="invoice-meta">
- <div class="kv-line"><span class="lbl">Invoice No.:</span><span class="val" contenteditable="true" id="invoiceNo" data-save="invoiceNo">1</span></div>
- <div class="kv-line"><span class="lbl">Date:</span><span class="val" contenteditable="true" id="invoiceDate" data-save="invoiceDate">01/01/2026</span></div>
+ <div class="kv-line"><span class="lbl">Invoice No.:</span><span class="val" contenteditable="true" id="invoiceNo" data-save="invoiceNo">1[span_11](start_span)[span_11](end_span)</span></div>
+ <div class="kv-line"><span class="lbl">Date:</span><span class="val" contenteditable="true" id="invoiceDate" data-save="invoiceDate">01/01/2026[span_12](start_span)[span_12](end_span)</span></div>
  <div class="kv-line" id="ewayRow"><span class="lbl">E-Way Bill No.:</span><span class="val" contenteditable="true" id="ewayBill" data-save="ewayBill"></span></div>
  <div class="kv-line" id="vanRow"><span class="lbl">Van No.:</span><span class="val" contenteditable="true" id="vanNo" data-save="vanNo"></span></div>
- <div class="kv-line"><span class="lbl">Place Of Supply:</span><span class="val" contenteditable="true" id="placeOfSupply" data-save="placeOfSupply">37-Andhra Pradesh</span></div>
+ <div class="kv-line"><span class="lbl">Place Of Supply:</span><span class="val" contenteditable="true" id="placeOfSupply" data-save="placeOfSupply">37-Andhra Pradesh[span_13](start_span)[span_13](end_span)</span></div>
  <div class="kv-line">
  <span class="lbl">Payment Mode:</span>
  <select class="payment-mode-select" id="paymentMode">
@@ -230,13 +268,13 @@ table.taxbreak tr.total-row td{font-weight:bold;border-top:1.5px solid var(--lin
 
  <div class="bill-to">
  <div class="section-label">Bill To:</div>
- <div class="customer-name" contenteditable="true" data-save="customerName">Customer Name</div>
- <div class="addr-line" contenteditable="true" data-save="customerAddr">Customer Address</div>
+ <div class="customer-name" contenteditable="true" data-save="customerName">Customer Name[span_14](start_span)[span_14](end_span)</div>
+ <div class="addr-line" contenteditable="true" data-save="customerAddr">Customer Address[span_15](start_span)[span_15](end_span)</div>
  <div class="state-row">
  <span class="lbl">State:</span>
- <span class="val" contenteditable="true" id="billToState" data-save="billToState">State</span>
+ <span class="val" contenteditable="true" id="billToState" data-save="billToState">State[span_16](start_span)[span_16](end_span)</span>
  <span class="lbl" style="margin-left:18px">GSTIN:</span>
- <span class="val" contenteditable="true" id="billToGstin" data-save="billToGstin">GSTIN</span>
+ <span class="val" contenteditable="true" id="billToGstin" data-save="billToGstin">GSTIN[span_17](start_span)[span_17](end_span)</span>
  </div>
  </div>
 
@@ -254,21 +292,21 @@ table.taxbreak tr.total-row td{font-weight:bold;border-top:1.5px solid var(--lin
  <tbody id="itemsBody"></tbody>
  <tfoot><tr class="total-row">
  <td colspan="3">Total</td>
- <td class="num" id="totQty">0</td><td></td><td></td>
- <td class="num" id="totGst">₹0.00</td>
- <td class="num" id="totAmt">₹0.00</td><td></td>
+ <td class="num" id="totQty">0[span_18](start_span)[span_18](end_span)</td><td></td><td></td>
+ <td class="num" id="totGst">₹0.00[span_19](start_span)[span_19](end_span)</td>
+ <td class="num" id="totAmt">₹0.00[span_20](start_span)[span_20](end_span)</td><td></td>
  </tr></tfoot>
  </table>
  <button class="add-row-btn" onclick="addItemRow()">+ Add Item Row</button>
 
  <div class="summary-bar">
  <div class="row">
- <div><span class="lbl">Sub Total: </span><span class="val">₹<span id="subTotal">0.00</span></span></div>
- <div><span class="lbl">Total: </span><span class="val">₹<span id="grandTotal">0.00</span></span><span id="amtWords"> (Zero Rupees only)</span></div>
+ <div><span class="lbl">Sub Total: </span><span class="val">₹<span id="subTotal">0.00[span_21](start_span)[span_21](end_span)</span></span></div>
+ <div><span class="lbl">Total: </span><span class="val">₹<span id="grandTotal">0.00[span_22](start_span)[span_22](end_span)</span></span><span id="amtWords"> (Zero Rupees only)[span_23](start_span)[span_23](end_span)</span></div>
  </div>
  <div class="row">
- <div><span class="lbl">Received: </span>₹<span class="val" contenteditable="true" id="received" data-save="received">0.00</span></div>
- <div><span class="lbl">Balance: </span>₹<span class="val" id="balance">0.00</span></div>
+ <div><span class="lbl">Received: </span>₹<span class="val" contenteditable="true" id="received" data-save="received">0.00[span_24](start_span)[span_24](end_span)</span></div>
+ <div><span class="lbl">Balance: </span>₹<span class="val" id="balance">0.00[span_25](start_span)[span_25](end_span)</span></div>
  </div>
  </div>
 
@@ -279,22 +317,22 @@ table.taxbreak tr.total-row td{font-weight:bold;border-top:1.5px solid var(--lin
  </thead>
  <tbody id="taxBreakBody"></tbody>
  <tfoot><tr class="total-row">
- <td class="left">TOTAL</td>
- <td id="tbTaxableTotal">0.00</td><td></td>
- <td id="tbCgstAmtTotal">0.00</td><td></td>
- <td id="tbSgstAmtTotal">0.00</td>
- <td id="tbTaxTotal">0.00</td>
+ <td class="left">TOTAL[span_26](start_span)[span_26](end_span)</td>
+ <td id="tbTaxableTotal">0.00[span_27](start_span)[span_27](end_span)</td><td></td>
+ <td id="tbCgstAmtTotal">0.00[span_28](start_span)[span_28](end_span)</td><td></td>
+ <td id="tbSgstAmtTotal">0.00[span_29](start_span)[span_29](end_span)</td>
+ <td id="tbTaxTotal">0.00[span_30](start_span)[span_30](end_span)</td>
  </tr></tfoot>
  </table>
 
  <div class="footer">
  <div>
  <div class="section-label">Terms &amp; Conditions:</div>
- <div contenteditable="true" data-save="terms">Thank you for doing business with us.</div>
+ <div contenteditable="true" data-save="terms">Thank you for doing business with us.[span_31](start_span)[span_31](end_span)</div>
  </div>
  <div>
- <div class="section-label" contenteditable="true" data-save="forLabel">For SREE VALLI TRADERS:</div>
- <div class="signature-area" contenteditable="true" data-save="signature">Authorized Signatory</div>
+ <div class="section-label" contenteditable="true" data-save="forLabel">For SREE VALLI TRADERS:[span_32](start_span)[span_32](end_span)</div>
+ <div class="signature-area" contenteditable="true" data-save="signature">Authorized Signatory[span_33](start_span)[span_33](end_span)</div>
  </div>
  </div>
  </div>
@@ -302,71 +340,120 @@ table.taxbreak tr.total-row td{font-weight:bold;border-top:1.5px solid var(--lin
 
 <script>
 /* ═══════════════════════════════════════════
- GLOBAL STATE & SECURE BACKEND ROUTING
+ DUAL ENGINE CLOUD CORE LAYOUT
 ═══════════════════════════════════════════ */
 let allBills = []; 
+let inventory = [];
 let currentBillId = null;
 let items = [];
 let autoSaveTimer = null;
 
-// Download all bills securely via our backend proxy
+// Download Shared Bills
 async function fetchBillsFromCloud() {
-  showSaveStatus('Downloading shared data…');
+  showSaveStatus('Syncing database items…');
   try {
     const res = await fetch('/api/bills', { method: "GET" });
     const data = await res.json();
-    if (res.ok && Array.isArray(data)) {
-      allBills = data;
-      showSaveStatus('✓ Database Synced');
-    } else {
-      showSaveStatus('⚠️ Sync Error');
-    }
-  } catch (e) {
-    showSaveStatus('⚠️ Fetch Offline');
-  }
+    if (res.ok && Array.isArray(data)) allBills = data;
+  } catch (e) { showSaveStatus('⚠️ Sync Offline'); }
   renderDashboard();
 }
 
-// Upload the entire updated array via our backend proxy
+// Download Active Inventory Records
+async function fetchInventoryFromCloud() {
+  try {
+    const res = await fetch('/api/bills?type=inventory', { method: "GET" });
+    const data = await res.json();
+    if (res.ok && Array.isArray(data)) {
+      inventory = data;
+      renderInventoryGrid();
+    }
+  } catch(e) { console.error("Inventory error", e); }
+}
+
 async function uploadBillsToCloud() {
   try {
-    const res = await fetch('/api/bills', {
+    await fetch('/api/bills', {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(allBills)
     });
-    if (res.ok) {
-      showSaveStatus('✓ Cloud Saved');
-    } else {
-      showSaveStatus('⚠️ Save Failed');
-    }
-  } catch (e) {
-    showSaveStatus('⚠️ Offline Mode');
-  }
+  } catch (e) { showSaveStatus('⚠️ Offline'); }
 }
 
-function getBillById(id){
- return allBills.find(b=>b.id===id)||null;
-}
-function genId(){
- return 'bill_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+async function uploadInventoryToCloud() {
+  try {
+    await fetch('/api/bills?type=inventory', {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(inventory)
+    });
+    renderInventoryGrid();
+  } catch (e) { alert("Stock update failed to push to serverless handler."); }
 }
 
 /* ═══════════════════════════════════════════
- NAVIGATION
+ INVENTORY LOGIC ENGINE
+═══════════════════════════════════════════ */
+function renderInventoryGrid() {
+  const tbody = document.getElementById('inventoryBody');
+  if(!tbody) return;
+  tbody.innerHTML = inventory.map((it, idx) => {
+    const isOut = it.quantity <= 0;
+    return `<tr>
+      <td><b>${it.name}</b></td>
+      <td>${it.hsn || '—'}</td>
+      <td><span style="font-size:14px; font-weight:bold;">${it.quantity}</span></td>
+      <td>${it.unit}</td>
+      <td>₹${it.price}</td>
+      <td>${it.gstPct}%</td>
+      <td><span class="stock-status ${isOut ? 'stock-out':'stock-in'}">${isOut ? 'OUT OF STOCK':'AVAILABLE'}</span></td>
+      <td><button class="btn btn-danger btn-sm" onclick="removeInventoryItem(${idx})">✕ Remove</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function addInventoryItem() {
+  const name = document.getElementById('invName').value.trim();
+  const hsn = document.getElementById('invHsn').value.trim();
+  const qty = parseFloat(document.getElementById('invQty').value) || 0;
+  const unit = document.getElementById('invUnit').value.trim() || 'Kg';
+  const price = parseFloat(document.getElementById('invPrice').value) || 0;
+  const gstPct = parseFloat(document.getElementById('invGst').value) || 5;
+
+  if(!name) { alert("Item name required"); return; }
+  
+  inventory.push({ name, hsn, quantity: qty, unit, price, gstPct });
+  uploadInventoryToCloud();
+
+  // Clear inputs
+  document.getElementById('invName').value = '';
+  document.getElementById('invHsn').value = '';
+  document.getElementById('invQty').value = '';
+  document.getElementById('invPrice').value = '';
+}
+
+function removeInventoryItem(idx) {
+  if(!confirm("Remove item type from stock logs?")) return;
+  inventory.splice(idx, 1);
+  uploadInventoryToCloud();
+}
+
+/* ═══════════════════════════════════════════
+ NAVIGATION & ROUTING MAPPING
 ═══════════════════════════════════════════ */
 function showPage(page){
  document.getElementById('dashPage').classList.toggle('hidden', page!=='dash');
  document.getElementById('editorPage').classList.toggle('hidden', page!=='editor');
- if(page==='dash') renderDashboard();
+ document.getElementById('inventoryPage').classList.toggle('hidden', page!=='inventory');
+ 
+ if(page==='dash') fetchBillsFromCloud();
+ if(page==='inventory') fetchInventoryFromCloud();
 }
-function goToDashboard(){ 
-  fetchBillsFromCloud();
-  showPage('dash'); 
-}
+function goToDashboard(){ showPage('dash'); }
 
 /* ═══════════════════════════════════════════
- DASHBOARD RENDERING
+ DASHBOARD DATA VIEW
 ═══════════════════════════════════════════ */
 function fmtINR(n){
  return '₹'+(Math.round((n+Number.EPSILON)*100)/100).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0});
@@ -381,48 +468,29 @@ function renderDashboard(){
  const [d,m,y] = b.invoiceDate.split('/');
  return parseInt(m)===now.getMonth()+1 && parseInt(y)===now.getFullYear();
  });
- const totalRev = bills.reduce((s,b)=>s+(b.grandTotal||0),0);
- const totalPend = bills.reduce((s,b)=>s+(b.balance||0),0);
-
+ 
  document.getElementById('statTotal').textContent = bills.length;
  document.getElementById('statMonth').textContent = thisMonth.length;
- document.getElementById('statRevenue').textContent = fmtINR(totalRev);
- document.getElementById('statPending').textContent = fmtINR(totalPend);
+ document.getElementById('statRevenue').textContent = fmtINR(bills.reduce((s,b)=>s+(b.grandTotal||0),0));
+ document.getElementById('statPending').textContent = fmtINR(bills.reduce((s,b)=>s+(b.balance||0),0));
 
  if(q){
- bills = bills.filter(b=>
- (b.customerName||'').toLowerCase().includes(q)||
- (b.invoiceNo||'').toLowerCase().includes(q)||
- (b.grandTotal||'').toString().includes(q)||
- (b.invoiceDate||'').includes(q)
- );
+ bills = bills.filter(b=> (b.customerName||'').toLowerCase().includes(q) || (b.invoiceNo||'').toLowerCase().includes(q) );
  }
 
  const grid = document.getElementById('billsGrid');
- const noBills = document.getElementById('noBills');
-
- if(!bills.length){
- grid.innerHTML='';
- noBills.classList.remove('hidden');
- return;
- }
- noBills.classList.add('hidden');
+ if(!bills.length){ grid.innerHTML=''; document.getElementById('noBills').classList.remove('hidden'); return; }
+ document.getElementById('noBills').classList.add('hidden');
 
  grid.innerHTML = bills.map(b=>{
  const pm = b.paymentMode||'Cash';
- const badgeCls = pm==='Cash'?'cash':pm==='Credit'?'credit':pm==='UPI'?'upi':'';
- return `
- <div class="bill-card">
- <div class="bill-card-top">
- <span class="bill-inv">Invoice #${b.invoiceNo||'—'}</span>
- <span class="bill-date">${b.invoiceDate||'—'}</span>
- </div>
+ return `<div class="bill-card">
+ <div class="bill-card-top"><span class="bill-inv">Invoice #${b.invoiceNo||'—'}</span><span class="bill-date">${b.invoiceDate||'—'}</span></div>
  <div class="bill-customer">${b.customerName||'Unknown Customer'}</div>
  <div class="bill-amount">₹${(b.grandTotal||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
  <div class="bill-meta">
- <span class="badge ${badgeCls}">${pm}</span>
- ${b.balance>0?`<span class="badge credit">Balance ₹${(b.balance||0).toLocaleString('en-IN',{minimumFractionDigits:0})}</span>`:'<span class="badge cash">Paid</span>'}
- <span class="badge">${(b.items||[]).length} items</span>
+ <span class="badge">${pm}</span>
+ ${b.balance>0?`<span class="badge danger">Due ₹${b.balance}</span>`:'<span class="badge" style="background:#dcfce7; color:#166534;">Paid</span>'}
  </div>
  <div class="bill-card-actions">
  <button class="btn btn-primary btn-sm" onclick="editBill('${b.id}')">✏️ Edit</button>
@@ -434,209 +502,123 @@ function renderDashboard(){
 }
 
 function confirmDelete(id){
- const bill = getBillById(id);
- if(!bill) return;
- if(!confirm(`Delete Invoice #${bill.invoiceNo} for ${bill.customerName}?\nThis removes it for everyone.`)) return;
+ if(!confirm("Delete this invoice configuration completely?")) return;
  allBills = allBills.filter(b=>b.id!==id);
  uploadBillsToCloud();
  renderDashboard();
 }
 
 /* ═══════════════════════════════════════════
- NEW / EDIT / LOAD BILL
+ INVOICE COMPILER ENGINE
 ═══════════════════════════════════════════ */
 function startNewInvoice(){
- currentBillId = genId();
- const maxNo = allBills.reduce((m,b)=>Math.max(m,parseInt(b.invoiceNo||0)||0),0);
- const nextNo = maxNo+1;
- const today = new Date();
- const dd=String(today.getDate()).padStart(2,'0');
- const mm=String(today.getMonth()+1).padStart(2,'0');
- const yyyy=today.getFullYear();
-
- items=[{name:'New Item',hsn:'',qty:1,unit:'Kg',price:0,gstPct:5}];
-
+ currentBillId = 'bill_'+Date.now();
+ items=[{name:'Type stock item name...',hsn:'',qty:1,unit:'Kg',price:0,gstPct:5}];
  showPage('editor');
- resetEditorFields({
- invoiceNo: String(nextNo),
- invoiceDate: `${dd}/${mm}/${yyyy}`,
- customerName:'Customer Name',customerAddr:'Customer Address',
- billToState:'State',billToGstin:'GSTIN',
- ewayBill:'',vanNo:'',
- placeOfSupply:'37-Andhra Pradesh',paymentMode:'Cash',
- received:'0.00',terms:'Thank you for doing business with us.',
- forLabel:'For SREE VALLI TRADERS:',signature:'Authorized Signatory'
- });
+ resetEditorFields({ invoiceNo: String(allBills.length+1), invoiceDate: new Date().toLocaleDateString('en-GB'), customerName:'Customer Name', customerAddr:'Customer Address', received:'0.00' });
  renderItems();
- showSaveStatus('New bill ready');
 }
 
 function editBill(id){
  currentBillId = id;
- const bill = getBillById(id);
- if(!bill){ alert('Bill not found'); return; }
+ const bill = allBills.find(b=>b.id===id);
+ if(!bill) return;
  items = (bill.items||[]).map(i=>({...i}));
  showPage('editor');
  resetEditorFields(bill);
- document.getElementById('paymentMode').value = bill.paymentMode||'Cash';
- syncPaymentModePrint();
  renderItems();
- showSaveStatus('Loaded');
 }
 
-function printBill(id){
- editBill(id);
- setTimeout(()=>{ printAndSave(); }, 400);
-}
+function printBill(id){ editBill(id); setTimeout(()=>{ printAndSave(); }, 400); }
 
 function resetEditorFields(data){
  const set = (id,val)=>{ const el=document.getElementById(id); if(el) el.textContent=val||''; };
  const setDS = (ds,val)=>{ const el=document.querySelector(`[data-save="${ds}"]`); if(el) el.textContent=val||''; };
-
- setDS('titleBar', data.titleBar||'Tax Invoice');
- setDS('sellerName', data.sellerName||'SREE VALLI TRADERS');
- setDS('sellerAddr', data.sellerAddr||'GROUND FLOOR 24-59-13 PEDAGANTYADA VINAYAKA NAGAR Visakhapatnam');
- setDS('sellerPhone', data.sellerPhone||'7989088940');
- setDS('sellerEmail', data.sellerEmail||'radhavudathu1971@gmail.com');
- set('sellerGstin', data.sellerGstin||'37AJKPV2937N1ZB');
- set('sellerState', data.sellerState||'37-Andhra Pradesh');
- set('invoiceNo', data.invoiceNo||'1');
- set('invoiceDate', data.invoiceDate||'');
- set('ewayBill', data.ewayBill||'');
- set('vanNo', data.vanNo||'');
- set('placeOfSupply', data.placeOfSupply||'37-Andhra Pradesh');
- setDS('customerName', data.customerName||'Customer Name');
- setDS('customerAddr', data.customerAddr||'Customer Address');
- set('billToState', data.billToState||'State');
- set('billToGstin', data.billToGstin||'GSTIN');
- set('received', data.received||'0.00');
- setDS('terms', data.terms||'Thank you for doing business with us.');
- setDS('forLabel', data.forLabel||'For SREE VALLI TRADERS:');
- setDS('signature', data.signature||'Authorized Signatory');
+ setDS('customerName', data.customerName); setDS('customerAddr', data.customerAddr);
+ set('invoiceNo', data.invoiceNo); set('invoiceDate', data.invoiceDate); set('received', data.received||'0.00');
 }
 
-/* ═══════════════════════════════════════════
- SHARED AUTO-SAVE LOGIC
-═══════════════════════════════════════════ */
 function collectBillData(){
- const getT = (id)=>{ const e=document.getElementById(id); return e?e.textContent.trim():''; };
- const getDS = (ds)=>{ const e=document.querySelector(`[data-save="${ds}"]`); return e?e.textContent.trim():''; };
  const total = parseFloat(document.getElementById('grandTotal').textContent.replace(/,/g,''))||0;
- const recv = parseFloat(getT('received').replace(/,/g,''))||0;
-
+ const recv = parseFloat(document.getElementById('received').textContent.replace(/,/g,''))||0;
  return {
- id: currentBillId,
- savedAt: new Date().toISOString(),
- titleBar: getDS('titleBar'),
- sellerName: getDS('sellerName'),
- sellerAddr: getDS('sellerAddr'),
- sellerPhone: getDS('sellerPhone'),
- sellerEmail: getDS('sellerEmail'),
- sellerGstin: getT('sellerGstin'),
- sellerState: getT('sellerState'),
- invoiceNo: getT('invoiceNo'),
- invoiceDate: getT('invoiceDate'),
- ewayBill: getT('ewayBill'),
- vanNo: getT('vanNo'),
- placeOfSupply: getT('placeOfSupply'),
- paymentMode: document.getElementById('paymentMode').value,
- customerName: getDS('customerName'),
- customerAddr: getDS('customerAddr'),
- billToState: getT('billToState'),
- billToGstin: getT('billToGstin'),
- received: getT('received'),
- terms: getDS('terms'),
- forLabel: getDS('forLabel'),
- signature: getDS('signature'),
- items: items.map(i=>({...i})),
- grandTotal: total,
- balance: Math.max(0, total - recv)
+ id: currentBillId, invoiceNo: document.getElementById('invoiceNo').textContent, invoiceDate: document.getElementById('invoiceDate').textContent,
+ customerName: document.querySelector('[data-save="customerName"]').textContent, customerAddr: document.querySelector('[data-save="customerAddr"]').textContent,
+ received: document.getElementById('received').textContent, items: items, grandTotal: total, balance: Math.max(0, total - recv)
  };
 }
 
 function autoSave(){
  if(!currentBillId) return;
  clearTimeout(autoSaveTimer);
- showSaveStatus('Staging data locally…');
+ const bill = collectBillData();
+ const idx = allBills.findIndex(b=>b.id===bill.id);
+ if(idx>=0) allBills[idx]=bill; else allBills.unshift(bill);
+ autoSaveTimer = setTimeout(uploadBillsToCloud, 1500);
+}
+
+function showSaveStatus(msg){ document.getElementById('saveStatus').textContent = msg; }
+
+/* ═══════════════════════════════════════════
+ DEDUCT STOCK + PRINT ENGINE
+═══════════════════════════════════════════ */
+async function printAndSave(){
+ for (let item of items) {
+   const stockItem = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
+   if (stockItem) {
+     if (stockItem.quantity < item.qty) {
+       alert(`Cannot finalize invoice! "${item.name}" has only ${stockItem.quantity} left in stock (You requested ${item.qty}).`);
+       return;
+     }
+   }
+ }
+
+ items.forEach(item => {
+   const stockItem = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
+   if (stockItem) {
+     stockItem.quantity = Math.max(0, stockItem.quantity - item.qty);
+   }
+ });
+
+ showSaveStatus("Syncing item volumes globally...");
+ await uploadInventoryToCloud(); 
  
  const bill = collectBillData();
  const idx = allBills.findIndex(b=>b.id===bill.id);
  if(idx>=0) allBills[idx]=bill; else allBills.unshift(bill);
-
- autoSaveTimer = setTimeout(async ()=>{
-  showSaveStatus('Pushing live updates to cloud…');
-  await uploadBillsToCloud();
- }, 1500); 
-}
-
-function showSaveStatus(msg){
- const el = document.getElementById('saveStatus');
- if(el) el.textContent = msg;
-}
-
-/* ═══════════════════════════════════════════
- PRINT + AUTOMATIC SYNC
-═══════════════════════════════════════════ */
-async function printAndSave(){
- const ewayVal = (document.getElementById('ewayBill').textContent||'').trim();
- const vanVal = (document.getElementById('vanNo').textContent||'').trim();
- const ewayRow = document.getElementById('ewayRow');
- const vanRow = document.getElementById('vanRow');
- if(!ewayVal) ewayRow.classList.add('hide-if-empty-print');
- if(!vanVal) vanRow.classList.add('hide-if-empty-print');
-
- if(currentBillId){
-   showSaveStatus('Syncing final changes to team database...');
-   const bill = collectBillData();
-   const idx = allBills.findIndex(b=>b.id===bill.id);
-   if(idx>=0) allBills[idx]=bill; else allBills.unshift(bill);
-   await uploadBillsToCloud(); 
- }
+ await uploadBillsToCloud();
  
  window.print();
-
- setTimeout(()=>{
- ewayRow.classList.remove('hide-if-empty-print');
- vanRow.classList.remove('hide-if-empty-print');
- }, 2000);
-}
-
-function deleteCurrent(){
- if(!currentBillId) return;
- if(!confirm(`Delete this bill entirely? This cannot be undone.`)) return;
- allBills = allBills.filter(b=>b.id!==currentBillId);
- uploadBillsToCloud();
- currentBillId = null;
- showPage('dash');
 }
 
 /* ═══════════════════════════════════════════
- ITEMS TABLE
+ ITEMS MANAGEMENT CONTEXT
 ═══════════════════════════════════════════ */
 const fmt = n=>(Math.round((n+Number.EPSILON)*100)/100).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
-
-function lineAmounts(it){
- const taxable=it.qty*it.price;
- const gst=taxable*(it.gstPct/100);
- return{taxable,gst,amount:taxable+gst};
-}
 
 function renderItems(){
  const body=document.getElementById('itemsBody');
  body.innerHTML='';
  items.forEach((it,idx)=>{
- const{gst,amount}=lineAmounts(it);
+ const taxable = it.qty * it.price;
+ const gst = taxable * (it.gstPct/100);
+ const stockMatch = inventory.find(i => i.name.toLowerCase() === it.name.toLowerCase());
+ const isInvalid = stockMatch && stockMatch.quantity < it.qty;
+ const isOut = stockMatch && stockMatch.quantity <= 0;
+
  const tr=document.createElement('tr');
  tr.dataset.idx=idx;
  tr.innerHTML=`
  <td>${idx+1}</td>
- <td contenteditable="true" data-field="name">${it.name}</td>
+ <td contenteditable="true" data-field="name" style="${isOut ? 'color: red; font-weight:bold;':''}">
+   ${it.name} ${isOut ? '⚠️ [OUT OF STOCK]' : isInvalid ? `⚠️ [ONLY ${stockMatch.quantity} LEFT]` : ''}
+ </td>
  <td contenteditable="true" data-field="hsn">${it.hsn}</td>
  <td class="num" contenteditable="true" data-field="qty">${it.qty}</td>
  <td class="center" contenteditable="true" data-field="unit">${it.unit}</td>
  <td class="num" contenteditable="true" data-field="price">${fmt(it.price)}</td>
- <td class="num">₹${fmt(gst)} (<span contenteditable="true" data-field="gstPct" class="gst-rate-edit">${it.gstPct}</span>%)</td>
- <td class="num">₹${fmt(amount)}</td>
+ <td class="num">₹${fmt(gst)} (${it.gstPct}%)</td>
+ <td class="num">₹${fmt(taxable + gst)}</td>
  <td class="del-cell"><button class="row-del" onclick="deleteRow(${idx})">✕</button></td>`;
  body.appendChild(tr);
  });
@@ -646,125 +628,60 @@ function renderItems(){
 
 function attachEditListeners(){
  document.querySelectorAll('#itemsBody [contenteditable]').forEach(cell=>{
- cell.removeEventListener('blur',onCellBlur);
- cell.addEventListener('blur',onCellBlur);
- cell.removeEventListener('keydown',onCellKeydown);
- cell.addEventListener('keydown',onCellKeydown);
+  cell.addEventListener('blur', e => {
+    const tr=cell.closest('tr'), idx=parseInt(tr.dataset.idx), field=cell.dataset.field;
+    let val=cell.textContent.trim();
+    
+    if(field === 'name') {
+      const match = inventory.find(i => i.name.toLowerCase() === val.toLowerCase());
+      if(match) {
+        items[idx].name = match.name;
+        items[idx].hsn = match.hsn;
+        items[idx].price = match.price;
+        items[idx].gstPct = match.gstPct;
+        items[idx].unit = match.unit;
+        renderItems();
+        return;
+      }
+    }
+
+    if(['qty','price','gstPct'].includes(field)) val=parseFloat(val.replace(/,/g,''))||0;
+    items[idx][field]=val;
+    renderItems();
+  });
  });
 }
-function onCellKeydown(e){ if(e.key==='Enter'){e.preventDefault();e.target.blur();} }
-function onCellBlur(e){
- const cell=e.target,tr=cell.closest('tr');
- if(!tr) return;
- const idx=parseInt(tr.dataset.idx,10),field=cell.dataset.field;
- if(!field) return;
- let val=cell.textContent.trim();
- if(['qty','price','gstPct'].includes(field)) val=parseFloat(val.replace(/,/g,''))||0;
- items[idx][field]=val;
- renderItems();
-}
-function addItemRow(){
- items.push({name:'New Item',hsn:'',qty:1,unit:'Kg',price:0,gstPct:5});
- renderItems();
-}
+
+function addItemRow(){ items.push({name:'Type stock item name...',hsn:'',qty:1,unit:'Kg',price:0,gstPct:5}); renderItems(); }
 function deleteRow(idx){ items.splice(idx,1); renderItems(); }
 
-/* ═══════════════════════════════════════════
- RECALC TOTALS
-═══════════════════════════════════════════ */
 function recalcAll(){
- let totQty=0,totGst=0,totAmt=0;
- const byHsn={};
+ let tQty=0, tGst=0, tAmt=0;
  items.forEach(it=>{
- const{taxable,gst,amount}=lineAmounts(it);
- totQty+=Number(it.qty)||0; totGst+=gst; totAmt+=amount;
- const key=(it.hsn||'—')+'|'+it.gstPct;
- if(!byHsn[key]) byHsn[key]={hsn:it.hsn||'—',gstPct:it.gstPct,taxable:0,gst:0};
- byHsn[key].taxable+=taxable; byHsn[key].gst+=gst;
+   const tx=it.qty*it.price; const g=tx*(it.gstPct/100);
+   tQty+=it.qty; tGst+=g; tAmt+=(tx+g);
  });
- document.getElementById('totQty').textContent=totQty;
- document.getElementById('totGst').textContent='₹'+fmt(totGst);
- document.getElementById('totAmt').textContent='₹'+fmt(totAmt);
- document.getElementById('subTotal').textContent=fmt(totAmt);
- document.getElementById('grandTotal').textContent=fmt(totAmt);
- const recv=parseFloat((document.getElementById('received').textContent||'0').replace(/,/g,''))||0;
- document.getElementById('balance').textContent=fmt(Math.max(0,totAmt-recv));
- document.getElementById('amtWords').textContent=' ('+numberToWordsRupees(Math.round(totAmt))+' only)';
-
- const tb=document.getElementById('taxBreakBody');
- tb.innerHTML='';
- let ttax=0,tCgst=0,tSgst=0,tTax=0;
- Object.keys(byHsn).sort().forEach(k=>{
- const r=byHsn[k],hr=r.gstPct/2,ha=r.gst/2;
- ttax+=r.taxable; tCgst+=ha; tSgst+=ha; tTax+=r.gst;
- const tr=document.createElement('tr');
- tr.innerHTML=`<td class="left">${r.hsn}</td><td>${fmt(r.taxable)}</td><td class="center">${hr}</td><td>${fmt(ha)}</td><td class="center">${hr}</td><td>${fmt(ha)}</td><td>${fmt(r.gst)}</td>`;
- tb.appendChild(tr);
- });
- document.getElementById('tbTaxableTotal').textContent=fmt(ttax);
- document.getElementById('tbCgstAmtTotal').textContent=fmt(tCgst);
- document.getElementById('tbSgstAmtTotal').textContent=fmt(tSgst);
- document.getElementById('tbTaxTotal').textContent=fmt(tTax);
-
+ document.getElementById('totQty').textContent=tQty;
+ document.getElementById('totGst').textContent='₹'+fmt(tGst);
+ document.getElementById('totAmt').textContent='₹'+fmt(tAmt);
+ document.getElementById('subTotal').textContent=fmt(tAmt);
+ document.getElementById('grandTotal').textContent=fmt(tAmt);
+ const r = parseFloat(document.getElementById('received').textContent.replace(/,/g,''))||0;
+ document.getElementById('balance').textContent=fmt(Math.max(0, tAmt - r));
  autoSave();
 }
 
-// Safe Native Form Target Bindings
-document.getElementById('received')?.addEventListener('input',recalcAll);
-document.getElementById('received')?.addEventListener('blur',recalcAll);
+// Global Document Node Listeners (Null-Safe)
+document.getElementById('received')?.addEventListener('input', recalcAll);
+document.getElementById('invoicePage')?.addEventListener('input', autoSave);
 
-/* ═══════════════════════════════════════════
- AUTO-SAVE EVENT LISTENERS (NULL-SAFE INTERFACES)
-═══════════════════════════════════════════ */
-document.getElementById('invoicePage')?.addEventListener('input', e=>{
- if(e.target.closest('#itemsBody')) return; 
- autoSave();
-});
-document.getElementById('paymentMode')?.addEventListener('change',()=>{ syncPaymentModePrint(); autoSave(); });
-
-/* ═══════════════════════════════════════════
- NUMBER TO WORDS
-═══════════════════════════════════════════ */
-function numberToWordsRupees(num){
- if(num===0) return 'Zero Rupees';
- const ones=['','One','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Eleven','Twelve','Thirteen','Fourteen','Fifteen','Sixteen','Seventeen','Eighteen','Nineteen'];
- const tens=['','','Twenty','Thirty','Forty','Fifty','Sixty','Seventy','Eighty','Ninety'];
- function two(n){ return n<20?ones[n]:tens[Math.floor(n/10)]+(n%10?' '+ones[n%10]:''); }
- function three(n){ return n>=100?ones[Math.floor(n/100)]+' Hundred'+(n%100?' '+two(n%100):''):two(n); }
- const cr=Math.floor(num/10000000),lk=Math.floor((num%10000000)/100000),th=Math.floor((num%100000)/1000),hu=num%1000;
- const p=[];
- if(cr) p.push(three(cr)+' Crore');
- if(lk) p.push(three(lk)+' Lakh');
- if(th) p.push(three(th)+' Thousand');
- if(hu) p.push(three(hu));
- return p.join(' ')+' Rupees';
-}
-
-/* ═══════════════════════════════════════════
- GSTIN AUTOFILL
-═══════════════════════════════════════════ */
-const GST_CODES={'01':'Jammu and Kashmir','02':'Himachal Pradesh','03':'Punjab','04':'Chandigarh','05':'Uttarakhand','06':'Haryana','07':'Delhi','08':'Rajasthan','09':'Uttar Pradesh','10':'Bihar','11':'Sikkim','12':'Arunachal Pradesh','13':'Nagaland','14':'Manipur','15':'Mizoram','16':'Tripura','17':'Meghalaya','18':'Assam','19':'West Bengal','20':'Jharkhand','21':'Odisha','22':'Chhattisgarh','23':'Madhya Pradesh','24':'Gujarat','26':'Dadra and Nagar Haveli and Daman and Diu','27':'Maharashtra','28':'Andhra Pradesh (Old)','29':'Karnataka','30':'Goa','31':'Lakshadweep','32':'Kerala','33':'Tamil Nadu','34':'Puducherry','35':'Andaman and Nicobar Islands','36':'Telangana','37':'Andhra Pradesh','38':'Ladakh','97':'Other Territory','99':'Centre Jurisdiction'};
-
-function gstinToState(g){ const c=(g||'').trim().substring(0,2); return /^\d{2}$/.test(c)&&GST_CODES[c]?c+'-'+GST_CODES[c]:null; }
-
-function wireGstinState(gstinId,stateId){
- const g=document.getElementById(gstinId),s=document.getElementById(stateId);
- if(!g||!s) return;
- const fill=()=>{ const r=gstinToState(g.textContent); if(r) s.textContent=r; };
- g.addEventListener('input',fill); g.addEventListener('blur',fill);
-}
-wireGstinState('sellerGstin','sellerState');
-wireGstinState('billToGstin','billToState');
-wireGstinState('billToGstin','placeOfSupply');
-
-/* Live API lookup */
-const GSTINCHECK_API_KEY='b217fc26c1f6ccd8e6bc30d52eb18f35';
+/* Live Secure Server Proxy Lookup Route */
 const GSTIN_REGEX=/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
 async function lookupGstin(gstin,type){
  const g=gstin.trim().toUpperCase();
  if(!GSTIN_REGEX.test(g)) return;
  try{
- const res=await fetch(`https://sheet.gstincheck.co.in/check/${GSTINCHECK_API_KEY}/${g}`);
+ const res=await fetch(`/api/bills?gstin=${g}`);
  const json=await res.json();
  const rec=json?.data?.data||json?.data||json?.taxpayerInfo||json;
  if(!rec||json.flag===false||json.error) return;

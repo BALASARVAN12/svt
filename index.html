@@ -150,7 +150,7 @@ table.taxbreak tr.total-row td{font-weight:bold;border-top:1.5px solid var(--lin
 [contenteditable="true"]:focus{background:#fff7cc;box-shadow:0 0 0 1px #e0c200;}
 .add-row-btn{margin:8px 14px;background:#16a34a;color:#fff;border:none;padding:6px 12px;border-radius:5px;font-size:12px;cursor:pointer;font-weight:600;}
 
-/* ─── INVENTORY FORM AND GRAPHICS MODULE ─── */
+/* ─── INVENTORY TABLE UI ─── */
 table.inventory-table{width:100%;max-width:1200px;margin:20px auto;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);}
 table.inventory-table th, table.inventory-table td{padding:12px 14px;text-align:left;border-bottom:1px solid #e2e8f0;font-size:12.5px;}
 table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
@@ -431,7 +431,6 @@ async function uploadInventoryToCloud() {
       body: JSON.stringify(inventory)
     });
     if(!res.ok) throw new Error();
-    renderInventoryGrid();
   } catch (e) { 
     console.error("Cloud inventory upload failed: ", e);
     alert("Stock update failed on database server."); 
@@ -480,7 +479,7 @@ function renderInventoryGrid() {
       <td><button class="btn btn-danger btn-sm" onclick="removeInventoryItem(${idx})">✕ Remove</button></td>
     </tr>`;
   }).join('');
-  if(document.getElementById('dashPage').style.display !== 'none') renderDashboard();
+  renderDashboard();
 }
 
 function addInventoryItem() {
@@ -495,7 +494,9 @@ function addInventoryItem() {
   if(!name) { alert("Product name required"); return; }
   
   inventory.push({ name, hsn, quantity: qty, unit, costPrice, sellingPrice, gstPct });
-  uploadInventoryToCloud();
+  uploadInventoryToCloud().then(() => {
+    renderInventoryGrid();
+  });
 
   document.getElementById('invName').value = '';
   document.getElementById('invHsn').value = '';
@@ -509,7 +510,9 @@ function addInventoryItem() {
 function removeInventoryItem(idx) {
   if(!confirm("Remove item from stock?")) return;
   inventory.splice(idx, 1);
-  uploadInventoryToCloud();
+  uploadInventoryToCloud().then(() => {
+    renderInventoryGrid();
+  });
 }
 
 function showPage(page){
@@ -523,7 +526,7 @@ function showPage(page){
 function goToDashboard(){ showPage('dash'); }
 
 /* ═══════════════════════════════════════════
- ADVANCED ANALYTICS DASHBOARD ENGINE
+ FIXED VISIBILITY ANALYTICS DASHBOARD ENGINE
 ═══════════════════════════════════════════ */
 function renderDashboard(){
  const q = (document.getElementById('searchInput').value||'').toLowerCase();
@@ -549,6 +552,7 @@ function renderDashboard(){
    }
  });
 
+ // CRITICAL FIX: Stock Valuation cards compute FIRST so they are always visible
  let totalStockCostValuationWithGST = 0;
  let totalExpectedStockRevenueWithGST = 0;
 
@@ -570,9 +574,19 @@ function renderDashboard(){
  document.getElementById('statPending').textContent = fmtINR(totalPendingBalance);
 
  const grid = document.getElementById('billsGrid');
- if(!bills.length){ grid.innerHTML=''; return; }
+ if(!grid) return;
+ 
+ if(!bills.length){ 
+   grid.innerHTML=''; 
+   document.getElementById('noBills').classList.remove('hidden');
+   return; 
+ }
+ document.getElementById('noBills').classList.add('hidden');
 
- // FIXED TEMPLATE STRING INLINE INJECTION BINDING
+ if(q){
+   bills = bills.filter(b=> (b.customerName||'').toLowerCase().includes(q) || (b.invoiceNo||'').toLowerCase().includes(q) );
+ }
+
  grid.innerHTML = bills.map(b => {
    const pm = b.paymentMode || 'Cash';
    return '<div class="bill-card">' +
@@ -610,12 +624,12 @@ function confirmDelete(id){
 
  allBills = allBills.filter(b=>b.id!==id);
  Promise.all([uploadInventoryToCloud(), uploadBillsToCloud()]).then(() => {
-   renderDashboard();
+   renderInventoryGrid();
  });
 }
 
 /* ═══════════════════════════════════════════
- INVOICE RECORD STATE ENGINE
+ INVOICE COMPILER ENGINE
 ═══════════════════════════════════════════ */
 function startNewInvoice(){
  currentBillId = 'bill_'+Date.now();
@@ -675,6 +689,7 @@ function showSaveStatus(msg){
   if (el) el.textContent = msg; 
 }
 
+// FIXED: Clean step execution order to avoid cloud loop failure
 async function printAndSave(){
  for (let item of items) {
    const stockItem = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
@@ -694,14 +709,19 @@ async function printAndSave(){
  });
 
  showSaveStatus("Syncing stock volumes globally...");
- await uploadInventoryToCloud(); 
  
  const bill = collectBillData();
  const idx = allBills.findIndex(b=>b.id===bill.id);
  if(idx>=0) allBills[idx]=bill; else allBills.unshift(bill);
- await uploadBillsToCloud();
  
- window.print();
+ // Sync changes together synchronously
+ try {
+   await uploadInventoryToCloud();
+   await uploadBillsToCloud();
+   window.print();
+ } catch(e) {
+   alert("Cloud synchronization timed out. Transaction aborted.");
+ }
 }
 
 function deleteCurrent(){

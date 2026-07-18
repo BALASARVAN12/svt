@@ -93,8 +93,9 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 .bill-to .state-row .lbl{font-weight:normal;}
 .bill-to .state-row .val{font-weight:bold;}
 
-/* Dropdown Alignment Target */
-.name-cell-container{position:relative;}
+/* Isolated Positioning Context for Dropdowns */
+.name-cell-container{position:relative; width:100%; height:100%; min-height:22px;}
+.item-name-input{width:100%; min-height:20px; outline:none; padding:2px;}
 
 /* ─── SUGGESTION DROPDOWN MODULE ─── */
 .suggestion-box{
@@ -112,6 +113,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 
 table.items{width:100%;border-collapse:collapse;font-size:11.5px;table-layout:fixed;}
 table.items th,table.items td{border-bottom:1px solid var(--line-light);padding:5px 6px;text-align:left;vertical-align:top;white-space:nowrap;overflow:hidden;}
+table.items td:nth-child(2) { overflow: visible !important; } 
 table.items td[data-field="name"],table.items th:nth-child(2){white-space:normal;word-wrap:break-word;overflow-wrap:break-word;overflow:visible;}
 table.items td.del-cell{overflow:visible;text-align:center;padding:5px 2px;}
 table.items thead th{border-top:1.5px solid var(--line);border-bottom:1.5px solid var(--line);font-weight:bold;background:var(--accent);}
@@ -157,9 +159,6 @@ table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
 .stock-status{font-weight:bold;padding:2px 6px;border-radius:4px;font-size:11px;}
 .stock-in{background:#dcfce7;color:#166534;}
 .stock-out{background:#fee2e2;color:#991b1b;}
-
-/* hidden eway/van rows on print */
-.eway-row.empty-print, .van-row.empty-print{ }
 
 /* ─── PRINT ─── */
 @media print{
@@ -366,7 +365,6 @@ let currentBillId = null;
 let items = [];
 let autoSaveTimer = null;
 
-// Download Bills cleanly with non-blocking logic
 async function fetchBillsFromCloud() {
   const el = document.getElementById('saveStatus');
   if (el) el.textContent = 'Syncing database items...';
@@ -384,7 +382,6 @@ async function fetchBillsFromCloud() {
   renderDashboard();
 }
 
-// Download Stock Records cleanly without locking UI execution
 async function fetchInventoryFromCloud() {
   try {
     const res = await fetch('/api/bills?type=inventory', { method: "GET" });
@@ -467,9 +464,6 @@ function removeInventoryItem(idx) {
   uploadInventoryToCloud();
 }
 
-/* ═══════════════════════════════════════════
- NAVIGATION SCREEN MAPPINGS
-═══════════════════════════════════════════ */
 function showPage(page){
  document.getElementById('dashPage').classList.toggle('hidden', page!=='dash');
  document.getElementById('editorPage').classList.toggle('hidden', page!=='editor');
@@ -541,7 +535,7 @@ function confirmDelete(id){
 ═══════════════════════════════════════════ */
 function startNewInvoice(){
  currentBillId = 'bill_'+Date.now();
- items=[{name:'Type stock item name...',hsn:'',qty:1,unit:'Kg',price:0,gstPct:5}];
+ items=[{name:'',hsn:'',qty:1,unit:'Kg',price:0,gstPct:5}];
  showPage('editor');
  resetEditorFields({ invoiceNo: String(allBills.length+1), invoiceDate: new Date().toLocaleDateString('en-GB'), customerName:'Customer Name', customerAddr:'Customer Address', received:'0.00' });
  renderItems();
@@ -587,9 +581,6 @@ function autoSave(){
 
 function showSaveStatus(msg){ document.getElementById('saveStatus').textContent = msg; }
 
-/* ═══════════════════════════════════════════
- INVENTORY VOLUMES SAVING CONTROL
-═══════════════════════════════════════════ */
 async function printAndSave(){
  for (let item of items) {
    const stockItem = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
@@ -620,7 +611,7 @@ async function printAndSave(){
 }
 
 /* ═══════════════════════════════════════════
- ITEMS ENTRY MATRIX & DROPDOWN ENGINE
+ ITEMS TABLE & STABLE DROPDOWN ENGINE
 ═══════════════════════════════════════════ */
 const fmt = n=>(Math.round((n+Number.EPSILON)*100)/100).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
 
@@ -635,9 +626,11 @@ function renderItems(){
  tr.dataset.idx=idx;
  tr.innerHTML=`
  <td>${idx+1}</td>
- <td class="name-cell-container">
-   <div contenteditable="true" data-field="name" class="item-name-input">${it.name}</div>
-   <div class="suggestion-box" id="suggest-${idx}"></div>
+ <td>
+   <div class="name-cell-container">
+     <div contenteditable="true" class="item-name-input" placeholder="Enter item name...">${it.name}</div>
+     <div class="suggestion-box" id="suggest-${idx}"></div>
+   </div>
  </td>
  <td contenteditable="true" data-field="hsn">${it.hsn}</td>
  <td class="num" contenteditable="true" data-field="qty">${it.qty}</td>
@@ -660,29 +653,35 @@ function attachEditListeners(){
 
    if (!nameInput || !suggestBox) return;
 
-   // Dropdown search builder loop with strict whitespace sanitization regex
+   // Real-time keystroke observer
    nameInput.addEventListener('input', () => {
-     const query = nameInput.textContent.replace(/[\n\r\t]/g, '').replace(/\u00a0/g, ' ').trim().toLowerCase();
-     if (!query) { suggestBox.style.display = 'none'; return; }
+     const rawText = nameInput.innerText || nameInput.textContent || '';
+     const query = rawText.replace(/[\n\r\t]/g, '').replace(/\u00a0/g, ' ').trim().toLowerCase();
+     
+     if (!query || query === "type stock item name...") { 
+       suggestBox.style.display = 'none'; 
+       return; 
+     }
 
      const matches = inventory.filter(i => i.name.toLowerCase().includes(query));
 
      if (matches.length === 0) {
-       suggestBox.innerHTML = `<div class="suggestion-item" style="color:#94a3b8;">No stock profile found</div>`;
+       suggestBox.innerHTML = `<div class="suggestion-item" style="color:#94a3b8;">No stock item found</div>`;
      } else {
        suggestBox.innerHTML = matches.map(match => {
          const isOut = match.quantity <= 0;
          return `<div class="suggestion-item" data-name="${match.name}">
            <span>${match.name}</span>
-           <span class="item-stock ${isOut ? 'out':''}">${isOut ? 'Out of Stock' : `${match.quantity} ${match.unit} available`}</span>
+           <span class="item-stock ${isOut ? 'out':''}">${isOut ? 'Out of Stock' : `${match.quantity} ${match.unit} left`}</span>
          </div>`;
        }).join('');
      }
      suggestBox.style.display = 'block';
    });
 
-   // Handle click selections on matching dropdown elements
-   suggestBox.addEventListener('click', e => {
+   // Intercept selection clicks cleanly
+   suggestBox.addEventListener('mousedown', e => {
+     e.preventDefault(); // Prevents blur event from firing before click registers
      const itemEl = e.target.closest('.suggestion-item');
      if (!itemEl || !itemEl.dataset.name) return;
 
@@ -701,8 +700,10 @@ function attachEditListeners(){
    });
 
    nameInput.addEventListener('blur', () => {
-     setTimeout(() => { suggestBox.style.display = 'none'; }, 250);
-     items[idx].name = nameInput.textContent.replace(/[\n\r\t]/g, '').replace(/\u00a0/g, ' ').trim();
+     // Safe execution delay to close the panel frame
+     setTimeout(() => { suggestBox.style.display = 'none'; }, 200);
+     const rawText = nameInput.innerText || nameInput.textContent || '';
+     items[idx].name = rawText.replace(/[\n\r\t]/g, '').replace(/\u00a0/g, ' ').trim();
      autoSave();
    });
 
@@ -718,26 +719,33 @@ function attachEditListeners(){
  });
 }
 
-function addItemRow(){ items.push({name:'Type stock item name...',hsn:'',qty:1,unit:'Kg',price:0,gstPct:5}); renderItems(); }
+function addItemRow(){ items.push({name:'',hsn:'',qty:1,unit:'Kg',price:0,gstPct:5}); renderItems(); }
 function deleteRow(idx){ items.splice(idx,1); renderItems(); }
 
 function recalcAll(){
- let tQty=0, tGst=0, tAmt=0;
- items.forEach(it=>{
-   const tx=it.qty*it.price; const g=tx*(it.gstPct/100);
-   tQty+=it.qty; tGst+=g; tAmt+=(tx+g);
- });
- document.getElementById('totQty').textContent=tQty;
- document.getElementById('totGst').textContent='₹'+fmt(tGst);
- document.getElementById('totAmt').textContent='₹'+fmt(tAmt);
- document.getElementById('subTotal').textContent=fmt(tAmt);
- document.getElementById('grandTotal').textContent=fmt(tAmt);
- const r = parseFloat((document.getElementById('received')?.textContent || '0').replace(/,/g,''))||0;
- document.getElementById('balance').textContent=fmt(Math.max(0, tAmt - r));
- autoSave();
+   let tQty=0, tGst=0, tAmt=0;
+   items.forEach(it=>{
+     const tx=it.qty*it.price; const g=tx*(it.gstPct/100);
+     tQty+=it.qty; tGst+=g; tAmt+=(tx+g);
+   });
+   const totQtyEl = document.getElementById('totQty');
+   const totGstEl = document.getElementById('totGst');
+   const totAmtEl = document.getElementById('totAmt');
+   const subTotalEl = document.getElementById('subTotal');
+   const grandTotalEl = document.getElementById('grandTotal');
+   const balanceEl = document.getElementById('balance');
+   const amtWordsEl = document.getElementById('amtWords');
+
+   if(totQtyEl) totQtyEl.textContent=tQty;
+   if(totGstEl) totGstEl.textContent='₹'+fmt(tGst);
+   if(totAmtEl) totAmtEl.textContent='₹'+fmt(tAmt);
+   if(subTotalEl) subTotalEl.textContent=fmt(tAmt);
+   if(grandTotalEl) grandTotalEl.textContent=fmt(tAmt);
+   const r = parseFloat((document.getElementById('received')?.textContent || '0').replace(/,/g,''))||0;
+   if(balanceEl) balanceEl.textContent=fmt(Math.max(0, tAmt - r));
+   autoSave();
 }
 
-// Global Document Node Observers (Null-Safe Interface Mapping)
 document.getElementById('received')?.addEventListener('input', recalcAll);
 document.getElementById('invoicePage')?.addEventListener('input', autoSave);
 
@@ -770,7 +778,6 @@ function syncPaymentModePrint(){
  if(s&&p) p.textContent=s.value;
 }
 
-// Initialize Application Core Pipelines
 fetchBillsFromCloud();
 fetchInventoryFromCloud();
 showPage('dash');

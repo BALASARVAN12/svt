@@ -358,7 +358,7 @@ table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
 
 <script>
 /* ═══════════════════════════════════════════
- DUAL ENGINE NON-BLOCKING BACKEND LOGIC
+ DUAL ENGINE CLOUD CORE LAYOUT
 ═══════════════════════════════════════════ */
 let allBills = []; 
 let inventory = [];
@@ -366,7 +366,7 @@ let currentBillId = null;
 let items = [];
 let autoSaveTimer = null;
 
-// Download Bills cleanly with strict validation handling
+// Download Bills cleanly with non-blocking logic
 async function fetchBillsFromCloud() {
   const el = document.getElementById('saveStatus');
   if (el) el.textContent = 'Syncing database items...';
@@ -384,7 +384,7 @@ async function fetchBillsFromCloud() {
   renderDashboard();
 }
 
-// Download Stock Records cleanly without locking UI pipeline
+// Download Stock Records cleanly without locking UI execution
 async function fetchInventoryFromCloud() {
   try {
     const res = await fetch('/api/bills?type=inventory', { method: "GET" });
@@ -422,7 +422,7 @@ async function uploadInventoryToCloud() {
 }
 
 /* ═══════════════════════════════════════════
- INVENTORY MANAGEMENT RENDER ENGINE
+ INVENTORY LOGIC ENGINE
 ═══════════════════════════════════════════ */
 function renderInventoryGrid() {
   const tbody = document.getElementById('inventoryBody');
@@ -468,7 +468,7 @@ function removeInventoryItem(idx) {
 }
 
 /* ═══════════════════════════════════════════
- APPLICATION SCREEN ROUTING MAPS
+ NAVIGATION SCREEN MAPPINGS
 ═══════════════════════════════════════════ */
 function showPage(page){
  document.getElementById('dashPage').classList.toggle('hidden', page!=='dash');
@@ -481,7 +481,7 @@ function showPage(page){
 function goToDashboard(){ showPage('dash'); }
 
 /* ═══════════════════════════════════════════
- DASHBOARD DATA OPERATIONS
+ DASHBOARD RENDERING PIPELINES
 ═══════════════════════════════════════════ */
 function fmtINR(n){
  return '₹'+(Math.round((n+Number.EPSILON)*100)/100).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0});
@@ -530,14 +530,14 @@ function renderDashboard(){
 }
 
 function confirmDelete(id){
- if(!confirm("Delete this invoice configuration completely?")) return;
+ if(!confirm("Delete this invoice completely?")) return;
  allBills = allBills.filter(b=>b.id!==id);
  uploadBillsToCloud();
  renderDashboard();
 }
 
 /* ═══════════════════════════════════════════
- INVOICE BUILD ENGINE
+ INVOICE RECORD STATE ENGINE
 ═══════════════════════════════════════════ */
 function startNewInvoice(){
  currentBillId = 'bill_'+Date.now();
@@ -588,7 +588,7 @@ function autoSave(){
 function showSaveStatus(msg){ document.getElementById('saveStatus').textContent = msg; }
 
 /* ═══════════════════════════════════════════
- STOCK DEDUCTIONS CONTROLLER
+ INVENTORY VOLUMES SAVING CONTROL
 ═══════════════════════════════════════════ */
 async function printAndSave(){
  for (let item of items) {
@@ -620,7 +620,7 @@ async function printAndSave(){
 }
 
 /* ═══════════════════════════════════════════
- INLINE EDITORS & DROP SEARCH INJECTION
+ ITEMS ENTRY MATRIX & DROPDOWN ENGINE
 ═══════════════════════════════════════════ */
 const fmt = n=>(Math.round((n+Number.EPSILON)*100)/100).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
 
@@ -660,9 +660,9 @@ function attachEditListeners(){
 
    if (!nameInput || !suggestBox) return;
 
-   // Dropdown search builder loop
+   // Dropdown search builder loop with strict whitespace sanitization regex
    nameInput.addEventListener('input', () => {
-     const query = nameInput.textContent.trim().toLowerCase();
+     const query = nameInput.textContent.replace(/[\n\r\t]/g, '').replace(/\u00a0/g, ' ').trim().toLowerCase();
      if (!query) { suggestBox.style.display = 'none'; return; }
 
      const matches = inventory.filter(i => i.name.toLowerCase().includes(query));
@@ -681,7 +681,7 @@ function attachEditListeners(){
      suggestBox.style.display = 'block';
    });
 
-   // Handle click interactions on menu options
+   // Handle click selections on matching dropdown elements
    suggestBox.addEventListener('click', e => {
      const itemEl = e.target.closest('.suggestion-item');
      if (!itemEl || !itemEl.dataset.name) return;
@@ -702,7 +702,7 @@ function attachEditListeners(){
 
    nameInput.addEventListener('blur', () => {
      setTimeout(() => { suggestBox.style.display = 'none'; }, 250);
-     items[idx].name = nameInput.textContent.trim();
+     items[idx].name = nameInput.textContent.replace(/[\n\r\t]/g, '').replace(/\u00a0/g, ' ').trim();
      autoSave();
    });
 
@@ -737,7 +737,7 @@ function recalcAll(){
  autoSave();
 }
 
-// Global Document Node Observers (Null-Safe)
+// Global Document Node Observers (Null-Safe Interface Mapping)
 document.getElementById('received')?.addEventListener('input', recalcAll);
 document.getElementById('invoicePage')?.addEventListener('input', autoSave);
 
@@ -770,7 +770,7 @@ function syncPaymentModePrint(){
  if(s&&p) p.textContent=s.value;
 }
 
-// Initialize Application Pipeline Context
+// Initialize Application Core Pipelines
 fetchBillsFromCloud();
 fetchInventoryFromCloud();
 showPage('dash');

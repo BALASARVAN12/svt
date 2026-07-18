@@ -16,7 +16,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 #dashPage.hidden,#editorPage.hidden,#inventoryPage.hidden{display:none!important;}
 #editorPage{display:block;}
 
-.dash-header{max-width:1080px;margin:0 auto 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.dash-header{max-width:1200px;margin:0 auto 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
 .dash-title{font-size:22px;font-weight:700;color:#1e293b;}
 .dash-title span{color:var(--primary);}
 .dash-actions{display:flex;gap:10px;}
@@ -30,7 +30,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 .btn-sm{padding:6px 12px;font-size:12px;border-radius:6px;}
 
 /* Stats Grid Layout */
-.dash-stats{max-width:1080px;margin:0 auto 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;}
+.dash-stats{max-width:1200px;margin:0 auto 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;}
 .stat-card{background:#fff;border-radius:12px;padding:16px 22px;box-shadow:0 1px 4px rgba(0,0,0,.08);border-left:4px solid var(--primary);}
 .stat-card.success{border-left-color:var(--success);}
 .stat-card.warn{border-left-color:var(--warn);}
@@ -39,12 +39,12 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 .stat-card .value{font-size:20px;font-weight:700;color:#1e293b;margin-top:4px;}
 
 /* Search & filter */
-.dash-controls{max-width:1080px;margin:0 auto 20px;display:flex;gap:10px;align-items:center;}
+.dash-controls{max-width:1200px;margin:0 auto 20px;display:flex;gap:10px;align-items:center;}
 .dash-search{flex:1;padding:9px 14px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;}
 .dash-search:focus{border-color:var(--primary);}
 
 /* Bill cards grid */
-.bills-grid{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+.bills-grid{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
 .bill-card{background:#fff;border-radius:12px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,.08);border:1.5px solid transparent;transition:border-color .15s,box-shadow .15s;cursor:pointer;}
 .bill-card:hover{border-color:var(--primary);box-shadow:0 4px 12px rgba(37,99,235,.12);}
 .bill-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
@@ -59,7 +59,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 .badge.upi{background:#e0f2fe;color:#0369a1;}
 .badge.danger{background:#fee2e2;color:#991b1b;}
 .bill-card-actions{display:flex;gap:6px;}
-.no-bills{max-width:1080px;margin:40px auto;text-align:center;color:#9ca3af;padding:60px 0;}
+.no-bills{max-width:1200px;margin:40px auto;text-align:center;color:#9ca3af;padding:60px 0;}
 .no-bills h3{font-size:20px;margin-bottom:8px;color:#6b7280;}
 
 /* ─── EDITOR TOOLBAR ─── */
@@ -152,12 +152,13 @@ table.taxbreak tr.total-row td{font-weight:bold;border-top:1.5px solid var(--lin
 [contenteditable="true"]:focus{background:#fff7cc;box-shadow:0 0 0 1px #e0c200;}
 .add-row-btn{margin:8px 14px;background:#16a34a;color:#fff;border:none;padding:6px 12px;border-radius:5px;font-size:12px;cursor:pointer;font-weight:600;}
 
-/* ─── INVENTORY TABLE UI ─── */
-table.inventory-table{width:100%;max-width:1080px;margin:20px auto;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);}
-table.inventory-table th, table.inventory-table td{padding:12px 16px;text-align:left;border-bottom:1px solid #e2e8f0;font-size:13px;}
+/* ─── INVENTORY MODULE WITH INTEGRATED TAX VISIBILITY ─── */
+table.inventory-table{width:100%;max-width:1200px;margin:20px auto;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+table.inventory-table th, table.inventory-table td{padding:12px 14px;text-align:left;border-bottom:1px solid #e2e8f0;font-size:12.5px;}
 table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
-.inventory-form{max-width:1080px;margin:0 auto 20px;background:#fff;padding:20px;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);display:flex;gap:10px;flex-wrap:wrap;}
-.inventory-form input{padding:8px 12px;border:1.5px solid #d1d5db;border-radius:6px;font-size:13px;flex:1;min-width:120px;}
+.inventory-form{max-width:1200px;margin:0 auto 20px;background:#fff;padding:20px;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);display:flex;gap:10px;flex-wrap:wrap;}
+.inventory-form input{padding:8px 12px;border:1.5px solid #d1d5db;border-radius:6px;font-size:13px;flex:1;min-width:110px;}
+.inventory-form input[readonly] { background: #f8fafc; color: #64748b; cursor: not-allowed; font-weight: bold; }
 .stock-status{font-weight:bold;padding:2px 6px;border-radius:4px;font-size:11px;}
 .stock-in{background:#dcfce7;color:#166534;}
 .stock-out{background:#fee2e2;color:#991b1b;}
@@ -223,26 +224,30 @@ table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
  </div>
 
  <div class="inventory-form">
- <input type="text" id="invName" placeholder="Item Name">
+ <input type="text" id="invName" placeholder="Product Name">
  <input type="text" id="invHsn" placeholder="HSN Code">
- <input type="number" id="invQty" placeholder="Available Stock (Quantity)">
- <input type="text" id="invUnit" placeholder="Unit (e.g. Kg, Pcs)">
- <input type="number" id="invCostPrice" placeholder="Cost Price (Got at ₹)">
- <input type="number" id="invSellPrice" placeholder="Selling Price (Bill at ₹)">
- <input type="number" id="invGst" placeholder="GST Rate (%)" value="5">
+ <input type="number" id="invQty" placeholder="Quantity">
+ <input type="text" id="invUnit" placeholder="Unit (e.g. Kg)" value="Kg">
+ <input type="number" id="invCostPrice" placeholder="Cost Price (Base ₹)" oninput="calcFormAllPrices()">
+ <input type="number" id="invGst" placeholder="GST Rate (%)" value="5" oninput="calcFormAllPrices()">
+  <input type="text" id="invCostInclusive" placeholder="Cost Total (+GST)" readonly>
+ <input type="number" id="invSellPrice" placeholder="Selling Price (Base ₹)" oninput="calcFormAllPrices()">
+ <input type="text" id="invSellInclusive" placeholder="Selling Total (+GST)" readonly>
  <button class="btn btn-success" onclick="addInventoryItem()">+ Add to Stock</button>
  </div>
 
  <table class="inventory-table">
  <thead>
    <tr>
-     <th>Item Name</th>
-     <th>HSN</th>
+     <th>Product Name</th>
+     <th>HSN Code</th>
      <th>Available Stock</th>
      <th>Unit</th>
-     <th>Cost Price (Before Tax)</th>
-     <th>Selling Price</th>
-     <th>GST</th>
+     <th>Cost Price (Base)</th>
+     <th>Cost Price (With GST)</th>
+     <th>Selling Price (Base)</th>
+     <th>Selling Price (With GST)</th>
+     <th>GST %</th>
      <th>Status</th>
      <th>Actions</th>
    </tr>
@@ -430,18 +435,45 @@ async function uploadInventoryToCloud() {
   } catch (e) { alert("Stock update failed."); }
 }
 
+/* ═══════════════════════════════════════════
+ INVENTORY LOGIC ENGINE (REAL-TIME TWO-TIER GST MATH)
+═══════════════════════════════════════════ */
+function calcFormAllPrices() {
+  const gstPct = parseFloat(document.getElementById('invGst').value) || 0;
+  const taxMultiplier = 1 + (gstPct / 100);
+
+  // 1. Cost Math Updates
+  const baseCost = parseFloat(document.getElementById('invCostPrice').value) || 0;
+  const inclusiveCost = baseCost * taxMultiplier;
+  document.getElementById('invCostInclusive').value = inclusiveCost ? '₹' + inclusiveCost.toFixed(2) : '';
+
+  // 2. Selling Math Updates
+  const baseSell = parseFloat(document.getElementById('invSellPrice').value) || 0;
+  const inclusiveSell = baseSell * taxMultiplier;
+  document.getElementById('invSellInclusive').value = inclusiveSell ? '₹' + inclusiveSell.toFixed(2) : '';
+}
+
 function renderInventoryGrid() {
   const tbody = document.getElementById('inventoryBody');
   if(!tbody) return;
   tbody.innerHTML = inventory.map((it, idx) => {
     const isOut = it.quantity <= 0;
+    const baseCost = it.costPrice || 0;
+    const baseSell = it.sellingPrice || 0;
+    const taxMultiplier = 1 + ((it.gstPct || 5) / 100);
+    
+    const inclusiveCost = baseCost * taxMultiplier;
+    const inclusiveSell = baseSell * taxMultiplier;
+    
     return `<tr>
       <td><b>${it.name}</b></td>
       <td>${it.hsn || '—'}</td>
       <td><span style="font-size:14px; font-weight:bold;">${it.quantity}</span></td>
       <td>${it.unit}</td>
-      <td>₹${it.costPrice || 0}</td>
-      <td>₹${it.sellingPrice || 0}</td>
+      <td>₹${baseCost.toFixed(2)}</td>
+      <td style="color:#475569; font-weight:600;">₹${inclusiveCost.toFixed(2)}</td>
+      <td>₹${baseSell.toFixed(2)}</td>
+      <td style="color:#1e3a8a; font-weight:bold;">₹${inclusiveSell.toFixed(2)}</td>
       <td>${it.gstPct}%</td>
       <td><span class="stock-status ${isOut ? 'stock-out':'stock-in'}">${isOut ? 'OUT OF STOCK':'AVAILABLE'}</span></td>
       <td><button class="btn btn-danger btn-sm" onclick="removeInventoryItem(${idx})">✕ Remove</button></td>
@@ -459,7 +491,7 @@ function addInventoryItem() {
   const sellingPrice = parseFloat(document.getElementById('invSellPrice').value) || 0;
   const gstPct = parseFloat(document.getElementById('invGst').value) || 5;
 
-  if(!name) { alert("Item name required"); return; }
+  if(!name) { alert("Product name required"); return; }
   
   inventory.push({ name, hsn, quantity: qty, unit, costPrice, sellingPrice, gstPct });
   uploadInventoryToCloud();
@@ -469,6 +501,8 @@ function addInventoryItem() {
   document.getElementById('invQty').value = '';
   document.getElementById('invCostPrice').value = '';
   document.getElementById('invSellPrice').value = '';
+  document.getElementById('invCostInclusive').value = '';
+  document.getElementById('invSellInclusive').value = '';
 }
 
 function removeInventoryItem(idx) {
@@ -506,7 +540,7 @@ function renderDashboard(){
      b.items.forEach(item => {
        const stockMatch = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
        const cost = stockMatch ? (stockMatch.costPrice || 0) : 0;
-       const sale = item.price || 0;
+       const sale = item.price || 0; 
        const itemQty = item.qty || 0;
        
        netIncomeProfit += (sale - cost) * itemQty;
@@ -514,18 +548,15 @@ function renderDashboard(){
    }
  });
 
- // Validated Formulas: BOTH Stock Investment and Stock Revenue now properly add custom GST
  let totalStockCostValuationWithGST = 0;
  let totalExpectedStockRevenueWithGST = 0;
 
  inventory.forEach(i => {
    const taxMultiplier = 1 + ((i.gstPct || 5) / 100);
    
-   // 1. Investment: Quantity * Cost Price * GST Multiplier
    const baseCostValue = (i.quantity || 0) * (i.costPrice || 0);
    totalStockCostValuationWithGST += (baseCostValue * taxMultiplier);
    
-   // 2. Revenue: Quantity * Selling Price * GST Multiplier
    const baseSaleValue = (i.quantity || 0) * (i.sellingPrice || 0);
    totalExpectedStockRevenueWithGST += (baseSaleValue * taxMultiplier);
  });
@@ -588,7 +619,7 @@ function confirmDelete(id){
 }
 
 /* ═══════════════════════════════════════════
- INVOICE COMPILER AUTOMATIONS
+ INVOICE COMPILER ENGINE
 ═══════════════════════════════════════════ */
 function startNewInvoice(){
  currentBillId = 'bill_'+Date.now();
@@ -700,33 +731,34 @@ function deleteCurrent(){
 }
 
 /* ═══════════════════════════════════════════
- ITEMS ENTRY GRID INTERFACES
+ ITEMS ENTRY TABLES & DROPDOWNS
 ═══════════════════════════════════════════ */
 function renderItems(){
  const body=document.getElementById('itemsBody');
  body.innerHTML='';
  items.forEach((it,idx)=>{
- const taxable = it.qty * it.price;
- const gst = taxable * (it.gstPct/100);
+   const taxableRowBase = it.qty * it.price;
+   const calculatedGstAmt = taxableRowBase * (it.gstPct / 100);
+   const finalTaxInclusiveTotal = taxableRowBase + calculatedGstAmt;
 
- const tr=document.createElement('tr');
- tr.dataset.idx=idx;
- tr.innerHTML=`
- <td>${idx+1}</td>
- <td>
-   <div class="name-cell-container">
-     <div contenteditable="true" class="item-name-input" placeholder="Enter item name...">${it.name}</div>
-     <div class="suggestion-box" id="suggest-${idx}"></div>
-   </div>
- </td>
- <td contenteditable="true" data-field="hsn">${it.hsn}</td>
- <td class="num" contenteditable="true" data-field="qty">${it.qty}</td>
- <td class="center" contenteditable="true" data-field="unit">${it.unit}</td>
- <td class="num" contenteditable="true" data-field="price">${fmt(it.price)}</td>
- <td class="num">₹${fmt(gst)} (${it.gstPct}%)</td>
- <td class="num">₹${fmt(taxable + gst)}</td>
- <td class="del-cell"><button class="row-del" onclick="deleteRow(${idx})">✕</button></td>`;
- body.appendChild(tr);
+   const tr = document.createElement('tr');
+   tr.dataset.idx = idx;
+   tr.innerHTML = `
+   <td>${idx+1}</td>
+   <td>
+     <div class="name-cell-container">
+       <div contenteditable="true" class="item-name-input" placeholder="Enter item name...">${it.name}</div>
+       <div class="suggestion-box" id="suggest-${idx}"></div>
+     </div>
+   </td>
+   <td contenteditable="true" data-field="hsn">${it.hsn}</td>
+   <td class="num" contenteditable="true" data-field="qty">${it.qty}</td>
+   <td class="center" contenteditable="true" data-field="unit">${it.unit}</td>
+   <td class="num" contenteditable="true" data-field="price">${fmt(it.price)}</td>
+   <td class="num">₹${fmt(calculatedGstAmt)} (${it.gstPct}%)</td>
+   <td class="num">₹${fmt(finalTaxInclusiveTotal)}</td>
+   <td class="del-cell"><button class="row-del" onclick="deleteRow(${idx})">✕</button></td>`;
+   body.appendChild(tr);
  });
  attachEditListeners();
  recalcAll();
@@ -753,9 +785,10 @@ function attachEditListeners(){
      } else {
        suggestBox.innerHTML = matches.map(match => {
          const isOut = match.quantity <= 0;
+         const incPrice = (match.sellingPrice || 0) * (1 + ((match.gstPct || 5) / 100));
          return `<div class="suggestion-item" data-name="${match.name}">
            <span>${match.name}</span>
-           <span class="item-stock ${isOut ? 'out':''}">${isOut ? 'Out of Stock' : `${match.quantity} ${match.unit} left (₹${match.sellingPrice})`}</span>
+           <span class="item-stock ${isOut ? 'out':''}">${isOut ? 'Out of Stock' : `${match.quantity} ${match.unit} left (Total: ₹${incPrice.toFixed(2)})`}</span>
          </div>`;
        }).join('');
      }
@@ -773,7 +806,7 @@ function attachEditListeners(){
      if (match) {
        items[idx].name = match.name;
        items[idx].hsn = match.hsn;
-       items[idx].price = match.sellingPrice || match.price || 0;
+       items[idx].price = match.sellingPrice || 0; 
        items[idx].gstPct = match.gstPct;
        items[idx].unit = match.unit;
        
@@ -806,27 +839,57 @@ function addItemRow(){ items.push({name:'',hsn:'',qty:1,unit:'Kg',price:0,gstPct
 function deleteRow(idx){ items.splice(idx,1); renderItems(); }
 
 function recalcAll(){
-   let tQty=0, tGst=0, tAmt=0;
-   items.forEach(it=>{
-     const tx=it.qty*it.price; const g=tx*(it.gstPct/100);
-     tQty+=it.qty; tGst+=g; tAmt+=(tx+g);
-   });
-   const totQtyEl = document.getElementById('totQty');
-   const totGstEl = document.getElementById('totGst');
-   const totAmtEl = document.getElementById('totAmt');
-   const subTotalEl = document.getElementById('subTotal');
-   const grandTotalEl = document.getElementById('grandTotal');
-   const balanceEl = document.getElementById('balance');
+   let tQty=0, tGst=0, tAmt=0, tTaxableTotal=0;
+   let taxGroups = {};
 
-   if(totQtyEl) totQtyEl.textContent=tQty;
-   if(totGstEl) totGstEl.textContent='₹'+fmt(tGst);
-   if(totAmtEl) totAmtEl.textContent='₹'+fmt(tAmt);
-   if(subTotalEl) subTotalEl.textContent=fmt(tAmt);
-   if(grandTotalEl) grandTotalEl.textContent=fmt(tAmt);
+   items.forEach(it=>{
+     const tx = it.qty * it.price; 
+     const g = tx * (it.gstPct / 100);
+     tQty += it.qty; 
+     tGst += g; 
+     tAmt += (tx + g);
+     tTaxableTotal += tx;
+
+     if (it.gstPct > 0) {
+       if (!taxGroups[it.gstPct]) taxGroups[it.gstPct] = { taxable: 0, taxAmt: 0 };
+       taxGroups[it.gstPct].taxable += tx;
+       taxGroups[it.gstPct].taxAmt += g;
+     }
+   });
+
+   if(document.getElementById('totQty')) document.getElementById('totQty').textContent=tQty;
+   if(document.getElementById('totGst')) document.getElementById('totGst').textContent='₹'+fmt(tGst);
+   if(document.getElementById('totAmt')) document.getElementById('totAmt').textContent='₹'+fmt(tAmt);
+   if(document.getElementById('subTotal')) document.getElementById('subTotal').textContent=fmt(tTaxableTotal);
+   if(document.getElementById('grandTotal')) document.getElementById('grandTotal').textContent=fmt(tAmt);
+   
    const r = parseFloat((document.getElementById('received')?.textContent || '0').replace(/,/g,''))||0;
-   if(balanceEl) balanceEl.textContent=fmt(Math.max(0, tAmt - r));
+   if(document.getElementById('balance')) document.getElementById('balance').textContent=fmt(Math.max(0, tAmt - r));
    if(document.getElementById('amtWords')) {
      document.getElementById('amtWords').textContent=' ('+numberToWordsRupees(Math.round(tAmt))+' only)';
+   }
+
+   const tbb = document.getElementById('taxBreakBody');
+   if (tbb) {
+     tbb.innerHTML = Object.keys(taxGroups).map(pct => {
+       const grp = taxGroups[pct];
+       const halfRate = parseFloat(pct) / 2;
+       const halfTax = grp.taxAmt / 2;
+       return `<tr>
+         <td class="left">GST ${pct}%</td>
+         <td>${fmt(grp.taxable)}</td>
+         <td class="center">${halfRate}%</td>
+         <td>${fmt(halfTax)}</td>
+         <td class="center">${halfRate}%</td>
+         <td>${fmt(halfTax)}</td>
+         <td>${fmt(grp.taxAmt)}</td>
+       </tr>`;
+     }).join('');
+     
+     if(document.getElementById('tbTaxableTotal')) document.getElementById('tbTaxableTotal').textContent = fmt(tTaxableTotal);
+     if(document.getElementById('tbCgstAmtTotal')) document.getElementById('tbCgstAmtTotal').textContent = fmt(tGst / 2);
+     if(document.getElementById('tbSgstAmtTotal')) document.getElementById('tbSgstAmtTotal').textContent = fmt(tGst / 2);
+     if(document.getElementById('tbTaxTotal')) document.getElementById('tbTaxTotal').textContent = fmt(tGst);
    }
    autoSave();
 }

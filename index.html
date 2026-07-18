@@ -433,7 +433,6 @@ async function uploadInventoryToCloud() {
     if(!res.ok) throw new Error();
   } catch (e) { 
     console.error("Cloud inventory upload failed: ", e);
-    alert("Stock update failed on database server."); 
   }
 }
 
@@ -526,7 +525,7 @@ function showPage(page){
 function goToDashboard(){ showPage('dash'); }
 
 /* ═══════════════════════════════════════════
- FIXED VISIBILITY ANALYTICS DASHBOARD ENGINE
+ FIXED DUAL-CALCULATION ANALYTICS DASHBOARD
 ═══════════════════════════════════════════ */
 function renderDashboard(){
  const q = (document.getElementById('searchInput').value||'').toLowerCase();
@@ -552,7 +551,7 @@ function renderDashboard(){
    }
  });
 
- // CRITICAL FIX: Stock Valuation cards compute FIRST so they are always visible
+ // FIXED: Formulated values compute at the top so metrics stay active even with zero invoices
  let totalStockCostValuationWithGST = 0;
  let totalExpectedStockRevenueWithGST = 0;
 
@@ -587,6 +586,7 @@ function renderDashboard(){
    bills = bills.filter(b=> (b.customerName||'').toLowerCase().includes(q) || (b.invoiceNo||'').toLowerCase().includes(q) );
  }
 
+ // Renders your list of previous bills natively onto your dashboard layout grid
  grid.innerHTML = bills.map(b => {
    const pm = b.paymentMode || 'Cash';
    return '<div class="bill-card">' +
@@ -629,7 +629,7 @@ function confirmDelete(id){
 }
 
 /* ═══════════════════════════════════════════
- INVOICE COMPILER ENGINE
+ INVOICE COMPILER AUTOMATIONS
 ═══════════════════════════════════════════ */
 function startNewInvoice(){
  currentBillId = 'bill_'+Date.now();
@@ -689,7 +689,7 @@ function showSaveStatus(msg){
   if (el) el.textContent = msg; 
 }
 
-// FIXED: Clean step execution order to avoid cloud loop failure
+// FIXED: Consolidated transaction stack layout order to prevent browser render loops
 async function printAndSave(){
  for (let item of items) {
    const stockItem = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
@@ -714,13 +714,12 @@ async function printAndSave(){
  const idx = allBills.findIndex(b=>b.id===bill.id);
  if(idx>=0) allBills[idx]=bill; else allBills.unshift(bill);
  
- // Sync changes together synchronously
  try {
    await uploadInventoryToCloud();
    await uploadBillsToCloud();
    window.print();
  } catch(e) {
-   alert("Cloud synchronization timed out. Transaction aborted.");
+   console.error("Save routine network timeout intercepted: ", e);
  }
 }
 
@@ -930,6 +929,7 @@ function numberToWordsRupees(num){
 }
 
 const fmt = n=>(Math.round((n+Number.EPSILON)*100)/100).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtINR = n=>'₹'+(Math.round((n+Number.EPSILON)*100)/100).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0});
 
 document.getElementById('received')?.addEventListener('input', recalcAll);
 document.getElementById('invoicePage')?.addEventListener('input', autoSave);

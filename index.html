@@ -72,7 +72,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 .toolbar .save-status{font-size:11px;padding:4px 10px;border-radius:20px;background:#1e3a5f;color:#93c5fd;font-weight:600;margin-left:auto;}
 
 /* ─── INVOICE PAGE ─── */
-.page{max-width:800px;margin:24px auto;background:var(--bg);border:1.5px solid var(--line);}
+.page{max-width:850px;margin:24px auto;background:var(--bg);border:1.5px solid var(--line);}
 .title-bar{text-align:center;font-weight:bold;font-size:15px;padding:6px 0;border-bottom:1.5px solid var(--line);letter-spacing:.5px;}
 .top-section{display:flex;border-bottom:1.5px solid var(--line);}
 .seller-info{flex:1.6;padding:10px 14px;border-right:1.5px solid var(--line);}
@@ -112,19 +112,23 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 .suggestion-item .item-stock{font-weight:bold;color:#16a34a;}
 .suggestion-item .item-stock.out{color:#dc2626;}
 
-table.items{width:100%;border-collapse:collapse;font-size:11.5px;table-layout:fixed;}
-table.items th,table.items td{border-bottom:1px solid var(--line-light);padding:5px 6px;text-align:left;vertical-align:top;white-space:nowrap;overflow:hidden;}
+table.items{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed;}
+table.items th,table.items td{border-bottom:1px solid var(--line-light);padding:6px 4px;text-align:left;vertical-align:middle;white-space:nowrap;overflow:hidden;}
 table.items td:nth-child(2) { overflow: visible !important; } 
 table.items td[data-field="name"],table.items th:nth-child(2){white-space:normal;word-wrap:break-word;overflow-wrap:break-word;overflow:visible;}
 table.items td.del-cell{overflow:visible;text-align:center;padding:5px 2px;}
-table.items thead th{border-top:1.5px solid var(--line);border-bottom:1.5px solid var(--line);font-weight:bold;background:var(--accent);}
+table.items thead th{border-top:1.5px solid var(--line);border-bottom:1.5px solid var(--line);font-weight:bold;background:var(--accent);text-align:center;}
 table.items td.num,table.items th.num{text-align:right;}
 table.items td.center,table.items th.center{text-align:center;}
-table.items col.col-idx{width:3%;}table.items col.col-name{width:24%;}
-table.items col.col-hsn{width:11%;}table.items col.col-qty{width:8%;}
-table.items col.col-unit{width:7%;}table.items col.col-price{width:13%;}
-table.items col.col-gst{width:16%;}table.items col.col-amt{width:14%;}
+
+/* Dual Pricing Column Track Matrices Layout */
+table.items col.col-idx{width:4%;} table.items col.col-name{width:22%;}
+table.items col.col-hsn{width:10%;} table.items col.col-qty{width:8%;}
+table.items col.col-unit{width:6%;}table.items col.col-price{width:11%;}
+table.items col.col-priceinc{width:11%;}table.items col.col-gst{width:10%;}
+table.items col.col-amt{width:11%;}   table.items col.col-amtinc{width:13%;}
 table.items col.col-del{width:4%;}
+
 .row-del{background:#fff0f0;color:#b91c1c;border:1px solid #f3c0c0;border-radius:4px;width:16px;height:16px;line-height:1;font-size:10px;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;}
 tr.total-row td{border-top:1.5px solid var(--line);border-bottom:1.5px solid var(--line);font-weight:bold;}
 .summary-bar{border-bottom:1.5px solid var(--line);font-size:11.5px;}
@@ -165,7 +169,7 @@ table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
  #dashPage, #inventoryPage{display:none!important;}
  .toolbar{display:none!important;}
  #editorPage{display:block!important;}
- @page{size:A4;margin:14mm 12mm;}
+ @page{size:A4;margin:12mm 10mm;}
  html,body{background:#fff;padding:0;margin:0;width:100%;}
  .page{max-width:100%;width:100%;border:1.5px solid var(--line);margin:0 auto;box-sizing:border-box;overflow:hidden;}
  table.items,table.taxbreak{width:100%!important;max-width:100%;}
@@ -183,7 +187,7 @@ table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
 <!-- ═══════════════════ DASHBOARD PAGE ═══════════════════ -->
 <div id="dashPage">
  <div class="dash-header">
- <div class="dash-title">🧾 <span>Sree Valli Traders</span> — Inventory Manager</div>
+ <div class="dash-title">🧾 <span>Sree Valli Traders</span> — Shared Manager</div>
  <div class="dash-actions">
  <button class="btn btn-primary" onclick="startNewInvoice()">+ New Bill</button>
  <button class="btn btn-secondary" onclick="showPage('inventory')">📦 Manage Inventory</button>
@@ -314,33 +318,49 @@ table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
 
  <table class="items" id="itemsTable">
  <colgroup>
- <col class="col-idx"><col class="col-name"><col class="col-hsn"><col class="col-qty">
- <col class="col-unit"><col class="col-price"><col class="col-gst"><col class="col-amt"><col class="col-del">
+   <col class="col-idx"><col class="col-name"><col class="col-hsn"><col class="col-qty"><col class="col-unit">
+   <col class="col-price"><col class="col-priceinc"><col class="col-gst"><col class="col-amt"><col class="col-amtinc"><col class="col-del">
  </colgroup>
- <thead><tr>
- <th>#</th><th>Item Name</th><th>HSN/ SAC</th>
- <th class="num">Quantity</th><th class="center">Unit</th>
- <th class="num">Price/ Unit(₹)</th><th class="num">GST(₹)</th>
- <th class="num">Amount(₹)</th><th></th>
- </tr></thead>
+ <thead>
+   <tr>
+     <th>#</th>
+     <th>Item Name</th>
+     <th>HSN Code</th>
+     <th class="num">Qty</th>
+     <th class="center">Unit</th>
+     <th class="num">Price/Unit<br>(Excl. GST)</th>
+     <th class="num">Price/Unit<br>(Incl. GST)</th>
+     <th class="num">GST Amt</th>
+     <th class="num">Amount<br>(Excl. GST)</th>
+     <th class="num">Amount<br>(Incl. GST)</th>
+     <th></th>
+   </tr>
+ </thead>
  <tbody id="itemsBody"></tbody>
- <tfoot><tr class="total-row">
- <td colspan="3">Total</td>
- <td class="num" id="totQty">0</td><td></td><td></td>
- <td class="num" id="totGst">₹0.00</td>
- <td class="num" id="totAmt">₹0.00</td><td></td>
- </tr></tfoot>
+ <tfoot>
+   <tr class="total-row">
+     <td colspan="3">Total Summary</td>
+     <td class="num" id="totQty">0</td>
+     <td></td>
+     <td></td>
+     <td></td>
+     <td class="num" id="totGst">₹0.00</td>
+     <td class="num" id="totTaxable">₹0.00</td>
+     <td class="num" id="totAmt">₹0.00</td>
+     <td></td>
+   </tr>
+ </tfoot>
  </table>
  <button class="add-row-btn" onclick="addItemRow()">+ Add Item Row</button>
 
  <div class="summary-bar">
  <div class="row">
- <div><span class="lbl">Sub Total: </span><span class="val">₹<span id="subTotal">0.00</span></span></div>
- <div><span class="lbl">Total: </span><span class="val">₹<span id="grandTotal">0.00</span></span><span id="amtWords"> (Zero Rupees only)</span></div>
+ <div><span class="lbl">Taxable Sub Total: </span>₹<span class="val" id="subTotal">0.00</span></div>
+ <div><span class="lbl">Grand Total: </span><span class="val">₹<span id="grandTotal">0.00</span></span><span id="amtWords"> (Zero Rupees only)</span></div>
  </div>
  <div class="row">
- <div><span class="lbl">Received: </span>₹<span class="val" contenteditable="true" id="received" data-save="received">0.00</span></div>
- <div><span class="lbl">Balance: </span>₹<span class="val" id="balance">0.00</span></div>
+ <div><span class="lbl">Received Amount: </span>₹<span class="val" contenteditable="true" id="received" data-save="received">0.00</span></div>
+ <div><span class="lbl">Balance Due: </span>₹<span class="val" id="balance">0.00</span></div>
  </div>
  </div>
 
@@ -437,7 +457,7 @@ async function uploadInventoryToCloud() {
 }
 
 /* ═══════════════════════════════════════════
- INVENTORY LOGIC ENGINE
+ INVENTORY ENGINE MANAGEMENT 
 ═══════════════════════════════════════════ */
 function calcFormAllPrices() {
   const gstPct = parseFloat(document.getElementById('invGst').value) || 0;
@@ -525,7 +545,7 @@ function showPage(page){
 function goToDashboard(){ showPage('dash'); }
 
 /* ═══════════════════════════════════════════
- FIXED DUAL-CALCULATION ANALYTICS DASHBOARD
+ METRICS ANALYTICS PANEL DESIGN 
 ═══════════════════════════════════════════ */
 function renderDashboard(){
  const q = (document.getElementById('searchInput').value||'').toLowerCase();
@@ -551,7 +571,6 @@ function renderDashboard(){
    }
  });
 
- // FIXED: Formulated values compute at the top so metrics stay active even with zero invoices
  let totalStockCostValuationWithGST = 0;
  let totalExpectedStockRevenueWithGST = 0;
 
@@ -586,7 +605,6 @@ function renderDashboard(){
    bills = bills.filter(b=> (b.customerName||'').toLowerCase().includes(q) || (b.invoiceNo||'').toLowerCase().includes(q) );
  }
 
- // Renders your list of previous bills natively onto your dashboard layout grid
  grid.innerHTML = bills.map(b => {
    const pm = b.paymentMode || 'Cash';
    return '<div class="bill-card">' +
@@ -629,7 +647,7 @@ function confirmDelete(id){
 }
 
 /* ═══════════════════════════════════════════
- INVOICE COMPILER AUTOMATIONS
+ INVOICE RECORD MANAGERS
 ═══════════════════════════════════════════ */
 function startNewInvoice(){
  currentBillId = 'bill_'+Date.now();
@@ -689,7 +707,6 @@ function showSaveStatus(msg){
   if (el) el.textContent = msg; 
 }
 
-// FIXED: Consolidated transaction stack layout order to prevent browser render loops
 async function printAndSave(){
  for (let item of items) {
    const stockItem = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
@@ -749,16 +766,21 @@ function deleteCurrent(){
 }
 
 /* ═══════════════════════════════════════════
- ITEMS ENTRY MATRIX & AUTO-TAX BUILDER
+ DUAL-COLUMN GRID TRACK IMPLEMENTATION
 ═══════════════════════════════════════════ */
 function renderItems(){
  const body=document.getElementById('itemsBody');
  if (!body) return;
  body.innerHTML='';
  items.forEach((it,idx)=>{
-   const taxableRowBase = it.qty * it.price;
-   const calculatedGstAmt = taxableRowBase * (it.gstPct / 100);
-   const finalTaxInclusiveTotal = taxableRowBase + calculatedGstAmt;
+   const taxMultiplier = 1 + (it.gstPct / 100);
+   
+   const unitPriceExclGst = it.price;
+   const unitPriceInclGst = it.price * taxMultiplier;
+
+   const rowAmountExclGst = it.qty * unitPriceExclGst;
+   const rowGstTotalAmt = rowAmountExclGst * (it.gstPct / 100);
+   const rowAmountInclGst = rowAmountExclGst + rowGstTotalAmt;
 
    const tr = document.createElement('tr');
    tr.dataset.idx = idx;
@@ -770,12 +792,14 @@ function renderItems(){
        <div class="suggestion-box" id="suggest-${idx}"></div>
      </div>
    </td>
-   <td contenteditable="true" data-field="hsn">${it.hsn}</td>
+   <td contenteditable="true" data-field="hsn" class="center">${it.hsn}</td>
    <td class="num" contenteditable="true" data-field="qty">${it.qty}</td>
    <td class="center" contenteditable="true" data-field="unit">${it.unit}</td>
-   <td class="num" contenteditable="true" data-field="price">${fmt(it.price)}</td>
-   <td class="num">₹${fmt(calculatedGstAmt)} (${it.gstPct}%)</td>
-   <td class="num">₹${fmt(finalTaxInclusiveTotal)}</td>
+   <td class="num" contenteditable="true" data-field="price">${fmt(unitPriceExclGst)}</td>
+   <td class="num" style="color: #475569; font-weight: 500;">₹${fmt(unitPriceInclGst)}</td>
+   <td class="num">₹${fmt(rowGstTotalAmt)} (${it.gstPct}%)</td>
+   <td class="num" style="background: #fafafa;">₹${fmt(rowAmountExclGst)}</td>
+   <td class="num" style="background: #f8fafc; font-weight: bold; color: #1e3a8a;">₹${fmt(rowAmountInclGst)}</td>
    <td class="del-cell"><button class="row-del" onclick="deleteRow(${idx})">✕</button></td>`;
    body.appendChild(tr);
  });
@@ -857,27 +881,36 @@ function attachEditListeners(){
 function addItemRow(){ items.push({name:'',hsn:'',qty:1,unit:'Kg',price:0,gstPct:5}); renderItems(); }
 function deleteRow(idx){ items.splice(idx,1); renderItems(); }
 
+/* ═══════════════════════════════════════════
+ SYNCHRONIZED RECALCULATION & TAX DISTRIBUTION ENGINE
+═══════════════════════════════════════════ */
 function recalcAll(){
    let tQty=0, tGst=0, tAmt=0, tTaxableTotal=0;
    let taxGroups = {};
 
    items.forEach(it=>{
-     const tx = it.qty * it.price; 
+     const tx = it.qty * it.price; // Base amount exclude GST
      const g = tx * (it.gstPct / 100);
      tQty += it.qty; 
      tGst += g; 
      tAmt += (tx + g);
      tTaxableTotal += tx;
 
-     if (it.gstPct > 0) {
-       if (!taxGroups[it.gstPct]) taxGroups[it.gstPct] = { taxable: 0, taxAmt: 0 };
-       taxGroups[it.gstPct].taxable += tx;
-       taxGroups[it.gstPct].taxAmt += g;
+     const cleanHsn = (it.hsn || '—').trim();
+     const cleanPct = parseFloat(it.gstPct) || 0;
+
+     if (cleanPct > 0) {
+       if (!taxGroups[cleanHsn]) {
+         taxGroups[cleanHsn] = { rate: cleanPct, taxable: 0, taxAmt: 0 };
+       }
+       taxGroups[cleanHsn].taxable += tx;
+       taxGroups[cleanHsn].taxAmt += g;
      }
    });
 
    if(document.getElementById('totQty')) document.getElementById('totQty').textContent=tQty;
    if(document.getElementById('totGst')) document.getElementById('totGst').textContent='₹'+fmt(tGst);
+   if(document.getElementById('totTaxable')) document.getElementById('totTaxable').textContent='₹'+fmt(tTaxableTotal);
    if(document.getElementById('totAmt')) document.getElementById('totAmt').textContent='₹'+fmt(tAmt);
    if(document.getElementById('subTotal')) document.getElementById('subTotal').textContent=fmt(tTaxableTotal);
    if(document.getElementById('grandTotal')) document.getElementById('grandTotal').textContent=fmt(tAmt);
@@ -888,20 +921,21 @@ function recalcAll(){
      document.getElementById('amtWords').textContent=' ('+numberToWordsRupees(Math.round(tAmt))+' only)';
    }
 
+   // FIXED: Re-mapped tax table rendering pipeline to cleanly group your dual prices by HSN code
    const tbb = document.getElementById('taxBreakBody');
    if (tbb) {
-     tbb.innerHTML = Object.keys(taxGroups).map(pct => {
-       const grp = taxGroups[pct];
-       const halfRate = parseFloat(pct) / 2;
+     tbb.innerHTML = Object.keys(taxGroups).map(hsn => {
+       const grp = taxGroups[hsn];
+       const halfRate = grp.rate / 2;
        const halfTax = grp.taxAmt / 2;
        return `<tr>
-         <td class="left">GST ${pct}%</td>
+         <td class="left">${hsn}</td>
          <td>${fmt(grp.taxable)}</td>
          <td class="center">${halfRate}%</td>
          <td>${fmt(halfTax)}</td>
          <td class="center">${halfRate}%</td>
          <td>${fmt(halfTax)}</td>
-         <td>${fmt(grp.taxAmt)}</td>
+         <td style="font-weight: bold;">${fmt(grp.taxAmt)}</td>
        </tr>`;
      }).join('');
      

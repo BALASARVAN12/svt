@@ -64,13 +64,12 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 
 /* ─── EDITOR TOOLBAR ─── */
 .toolbar{background:#1e293b;padding:10px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;position:sticky;top:0;z-index:100;}
-.toolbar button,.toolbar label.upload-btn{background:#2563eb;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap;}
+.toolbar button{background:#2563eb;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap;}
 .toolbar button.secondary{background:#4b5563;}
 .toolbar button.danger{background:#b91c1c;}
 .toolbar button.success{background:#16a34a;}
 .toolbar button:hover{opacity:.88;}
-.toolbar .hint{font-size:11px;color:#94a3b8;margin-left:auto;}
-.toolbar .save-status{font-size:11px;padding:4px 10px;border-radius:20px;background:#1e3a5f;color:#93c5fd;font-weight:600;}
+.toolbar .save-status{font-size:11px;padding:4px 10px;border-radius:20px;background:#1e3a5f;color:#93c5fd;font-weight:600;margin-left:auto;}
 
 /* ─── INVOICE PAGE ─── */
 .page{max-width:800px;margin:24px auto;background:var(--bg);border:1.5px solid var(--line);}
@@ -126,7 +125,6 @@ table.items col.col-hsn{width:11%;}table.items col.col-qty{width:8%;}
 table.items col.col-unit{width:7%;}table.items col.col-price{width:13%;}
 table.items col.col-gst{width:16%;}table.items col.col-amt{width:14%;}
 table.items col.col-del{width:4%;}
-.gst-rate-edit{border-bottom:1px dotted var(--line-light);padding:0 1px;}
 .row-del{background:#fff0f0;color:#b91c1c;border:1px solid #f3c0c0;border-radius:4px;width:16px;height:16px;line-height:1;font-size:10px;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;}
 tr.total-row td{border-top:1.5px solid var(--line);border-bottom:1.5px solid var(--line);font-weight:bold;}
 .summary-bar{border-bottom:1.5px solid var(--line);font-size:11.5px;}
@@ -574,22 +572,23 @@ function renderDashboard(){
  const grid = document.getElementById('billsGrid');
  if(!bills.length){ grid.innerHTML=''; return; }
 
+ // FIXED TEMPLATE STRING INLINE INJECTION BINDING
  grid.innerHTML = bills.map(b => {
    const pm = b.paymentMode || 'Cash';
-   return `<div class="bill-card">
-     <div class="bill-card-top"><span class="bill-inv">Invoice #${b.invoiceNo || '—'}</span><span class="bill-date">${b.invoiceDate || '—'}</span></div>
-     <div class="bill-customer">${b.customerName || 'Unknown Customer'}</div>
-     <div class="bill-amount">₹${(b.grandTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-     <div class="bill-meta">
-       <span class="badge">${pm}</span>
-       ${b.balance > 0 ? `<span class="badge danger">Due ₹${b.balance}</span>` : '<span class="badge" style="background:#dcfce7; color:#166534;">Paid</span>'}
-     </div>
-     <div class="bill-card-actions">
-       <button class="btn btn-primary btn-sm" onclick="editBill('${b.id}')">✏️ Edit</button>
-       <button class="btn btn-secondary btn-sm" onclick="printBill('${b.id}')">🖨️ Print</button>
-       <button class="btn btn-danger btn-sm" onclick="confirmDelete('${b.id}')">🗑</button>
-     </div>
-   </div>`;
+   return '<div class="bill-card">' +
+     '<div class="bill-card-top"><span class="bill-inv">Invoice #' + (b.invoiceNo || '—') + '</span><span class="bill-date">' + (b.invoiceDate || '—') + '</span></div>' +
+     '<div class="bill-customer">' + (b.customerName || 'Unknown Customer') + '</div>' +
+     '<div class="bill-amount">₹' + (b.grandTotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</div>' +
+     '<div class="bill-meta">' +
+       '<span class="badge">' + pm + '</span>' +
+       (b.balance > 0 ? '<span class="badge danger">Due ₹' + b.balance + '</span>' : '<span class="badge" style="background:#dcfce7; color:#166534;">Paid</span>') +
+     '</div>' +
+     '<div class="bill-card-actions">' +
+       '<button class="btn btn-primary btn-sm" onclick="editBill(\'' + b.id + '\')">✏️ Edit</button>' +
+       '<button class="btn btn-secondary btn-sm" onclick="printBill(\'' + b.id + '\')">🖨️ Print</button>' +
+       '<button class="btn btn-danger btn-sm" onclick="confirmDelete(\'' + b.id + '\')">🗑</button>' +
+     '</div>' +
+   '</div>';
  }).join('');
 }
 
@@ -735,6 +734,7 @@ function deleteCurrent(){
 ═══════════════════════════════════════════ */
 function renderItems(){
  const body=document.getElementById('itemsBody');
+ if (!body) return;
  body.innerHTML='';
  items.forEach((it,idx)=>{
    const taxableRowBase = it.qty * it.price;
@@ -908,6 +908,8 @@ function numberToWordsRupees(num){
  if(hu) p.push(three(hu));
  return p.join(' ')+' Rupees';
 }
+
+const fmt = n=>(Math.round((n+Number.EPSILON)*100)/100).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
 
 document.getElementById('received')?.addEventListener('input', recalcAll);
 document.getElementById('invoicePage')?.addEventListener('input', autoSave);

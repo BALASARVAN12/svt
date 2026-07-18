@@ -654,14 +654,15 @@ function renderDashboard(){
  }).join('');
 }
 
+/* FIXED CONFIRM-DELETE: Skips stock additions if the bill was never finalized/printed */
 function confirmDelete(id){
  const targetBill = allBills.find(function(b) { return b.id === id; });
  if(!targetBill) return;
- if(!confirm("Delete this invoice completely? This returns sold stock amounts to inventory.")) return;
+ if(!confirm("Delete this invoice completely?")) return;
  
  totalReturnsAccumulator += (targetBill.grandTotal || 0);
 
- if (targetBill.items && Array.isArray(targetBill.items)) {
+ if (targetBill.isDeducted && targetBill.items && Array.isArray(targetBill.items)) {
    targetBill.items.forEach(function(item) {
      const stockItem = inventory.find(function(i) { return i.name.toLowerCase() === item.name.toLowerCase(); });
      if (stockItem) {
@@ -677,7 +678,7 @@ function confirmDelete(id){
 }
 
 /* ═══════════════════════════════════════════
- INVOICE GENERATOR STATE RECORDERS
+ BILL RECOMPILER INTERFACES
 ═══════════════════════════════════════════ */
 function startNewInvoice(){
  currentBillId = 'bill_'+Date.now();
@@ -716,10 +717,16 @@ function resetEditorFields(data){
 function collectBillData(){
  const total = parseFloat(document.getElementById('grandTotal').textContent.replace(/,/g,''))||0;
  const recv = parseFloat(document.getElementById('received').textContent.replace(/,/g,''))||0;
+ 
+ // Find existing record state to preserve historical deduction tags
+ const existingBill = allBills.find(function(b) { return b.id === currentBillId; });
+ const previouslyDeducted = existingBill ? !!existingBill.isDeducted : false;
+
  return {
  id: currentBillId, invoiceNo: document.getElementById('invoiceNo').textContent, invoiceDate: document.getElementById('invoiceDate').textContent,
  customerName: document.querySelector('[data-save="customerName"]').textContent, customerAddr: document.querySelector('[data-save="customerAddr"]').textContent,
- received: document.getElementById('received').textContent, items: items, grandTotal: total, balance: Math.max(0, total - recv)
+ received: document.getElementById('received').textContent, items: items, grandTotal: total, balance: Math.max(0, total - recv),
+ isDeducted: previouslyDeducted
  };
 }
 
@@ -737,6 +744,7 @@ function showSaveStatus(msg){
   if (el) el.textContent = msg; 
 }
 
+/* SAFE SELECTION AND TRANSACTION PROTOCOL LOGS */
 async function printAndSave(){
  for (let i = 0; i < items.length; i++) {
    let item = items[i];
@@ -751,7 +759,7 @@ async function printAndSave(){
  }
 
  items.forEach(function(item) {
-   if (!item.name) return; // Completely cleaned typo: replaced invalid loop skip with safe return paths
+   if (!item.name) return;
    const stockItem = inventory.find(function(inv) { return inv.name.toLowerCase() === item.name.toLowerCase(); });
    if (stockItem) {
      stockItem.quantity = Math.max(0, stockItem.quantity - (parseFloat(item.qty) || 0));
@@ -761,6 +769,8 @@ async function printAndSave(){
  showSaveStatus("Syncing stock volumes globally...");
  
  const bill = collectBillData();
+ bill.isDeducted = true; // Sets verification flag directly upon complete final print execution
+ 
  const idx = allBills.findIndex(function(b) { return b.id === bill.id; });
  if(idx>=0) allBills[idx]=bill; else allBills.unshift(bill);
  
@@ -773,14 +783,15 @@ async function printAndSave(){
  }
 }
 
+/* FIXED DELETE-CURRENT: Skips stock reconciliation if bill was a raw unprinted draft */
 function deleteCurrent(){
  if(!currentBillId) return;
- if(!confirm("Delete this bill entirely? This returns sold stock amounts to inventory.")) return;
+ if(!confirm("Delete this bill entirely?")) return;
  
  const targetBill = allBills.find(function(b) { return b.id === currentBillId; });
  if (targetBill) {
    totalReturnsAccumulator += (targetBill.grandTotal || 0);
-   if (targetBill.items) {
+   if (targetBill.isDeducted && targetBill.items) {
      targetBill.items.forEach(function(item) {
        const stockItem = inventory.find(function(inv) { return inv.name.toLowerCase() === item.name.toLowerCase(); });
        if (stockItem) {
@@ -854,7 +865,6 @@ function attachEditListeners(){
      
      if (!query) { suggestBox.style.display = 'none'; return; }
 
-     // FIXED CRITICAL EXTRA PARENTHESIS ERROR HERE: Scrubbed query matching string logic safely
      const matches = inventory.filter(function(i) { return i.name.toLowerCase().includes(query); });
 
      if (matches.length === 0) {
@@ -1026,7 +1036,7 @@ function syncPaymentModePrint(){
  if(s&&p) p.textContent=s.value;
 }
 
-// Initial Boot Strapping Bootstraps
+// Initial Boot Strapping 
 fetchBillsFromCloud();
 fetchInventoryFromCloud();
 showPage('dash');

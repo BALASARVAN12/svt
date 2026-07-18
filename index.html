@@ -186,7 +186,7 @@ table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
 <!-- ═══════════════════ DASHBOARD PAGE ═══════════════════ -->
 <div id="dashPage">
  <div class="dash-header">
- <div class="dash-title">🧾 <span>Sree Valli Traders</span> — Shared Manager</div>
+ <div class="dash-title">🧾 <span>Sree Valli Traders</span> — Invoice Manager</div>
  <div class="dash-actions">
  <button class="btn btn-primary" onclick="startNewInvoice()">+ New Bill</button>
  <button class="btn btn-secondary" onclick="showPage('inventory')">📦 Manage Inventory</button>
@@ -399,7 +399,7 @@ let items = [];
 let autoSaveTimer = null;
 let totalReturnsAccumulator = 0;
 
-// Page Navigation
+// Navigation Engine Layout Switcher
 function showPage(page){
  document.getElementById('dashPage').classList.toggle('hidden', page!=='dash');
  document.getElementById('editorPage').classList.toggle('hidden', page!=='editor');
@@ -410,7 +410,7 @@ function showPage(page){
 }
 function goToDashboard(){ showPage('dash'); }
 
-// Database Synchronization Handlers
+// Database Sync Fetch Operations
 async function fetchBillsFromCloud() {
   const el = document.getElementById('saveStatus');
   if (el) el.textContent = 'Syncing database items...';
@@ -481,7 +481,7 @@ function calcFormAllPrices() {
 }
 
 /* ═══════════════════════════════════════════
- INVENTORY UI AND DIRECT TABLE CELL EDITORS
+ INVENTORY GRID AND ROW-BY-ROW MODIFIERS
 ═══════════════════════════════════════════ */
 function renderInventoryGrid() {
   const tbody = document.getElementById('inventoryBody');
@@ -573,7 +573,7 @@ function removeInventoryItem(idx) {
 }
 
 /* ═══════════════════════════════════════════
- DASHBOARD METRICS CALCULATOR
+ DASHBOARD LOG MANAGEMENT HUB
 ═══════════════════════════════════════════ */
 function renderDashboard(){
  const q = (document.getElementById('searchInput').value||'').toLowerCase();
@@ -677,7 +677,7 @@ function confirmDelete(id){
 }
 
 /* ═══════════════════════════════════════════
- INVOICE GENERATOR STATE RECORDERS
+ BILL RECOMPILER INTERFACES
 ═══════════════════════════════════════════ */
 function startNewInvoice(){
  currentBillId = 'bill_'+Date.now();
@@ -737,11 +737,11 @@ function showSaveStatus(msg){
   if (el) el.textContent = msg; 
 }
 
-/* CRITICAL: Safe warehouse verification before printing window triggers */
+/* FIXED SYNTAX ENGINE: Replaced 'continue' inside forEach with standard function return paths */
 async function printAndSave(){
  for (let i = 0; i < items.length; i++) {
    let item = items[i];
-   if (!item.name) continue;
+   if (!item.name) continue; 
    const stockItem = inventory.find(function(inv) { return inv.name.toLowerCase() === item.name.toLowerCase(); });
    if (stockItem) {
      if (stockItem.quantity < (parseFloat(item.qty) || 0)) {
@@ -752,7 +752,7 @@ async function printAndSave(){
  }
 
  items.forEach(function(item) {
-   if (!item.name) continue;
+   if (!item.name) return; // FIXED: Changed 'continue' to 'return' inside array.forEach block
    const stockItem = inventory.find(function(inv) { return inv.name.toLowerCase() === item.name.toLowerCase(); });
    if (stockItem) {
      stockItem.quantity = Math.max(0, stockItem.quantity - (parseFloat(item.qty) || 0));
@@ -800,7 +800,7 @@ function deleteCurrent(){
 }
 
 /* ═══════════════════════════════════════════
- INVOICE ROW RENDERER & DUAL-TRACK MATHEMATICS
+ INVOICE ROW BUILDER MATRICES
 ═══════════════════════════════════════════ */
 function renderItems(){
  const body=document.getElementById('itemsBody');
@@ -855,7 +855,7 @@ function attachEditListeners(){
      
      if (!query) { suggestBox.style.display = 'none'; return; }
 
-     const matches = inventory.filter(function(i) { return i.name.toLowerCase().includes(query); });
+     const matches = inventory.filter(function(i) { return i.name.toLowerCase().includes(query)); });
 
      if (matches.length === 0) {
        suggestBox.innerHTML = '<div class="suggestion-item" style="color:#94a3b8;">No stock item found</div>';
@@ -1026,7 +1026,7 @@ function syncPaymentModePrint(){
  if(s&&p) p.textContent=s.value;
 }
 
-// Initial Boot Strapping Bootstraps
+// Initial Boot Strapping 
 fetchBillsFromCloud();
 fetchInventoryFromCloud();
 showPage('dash');

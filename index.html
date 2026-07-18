@@ -16,7 +16,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 #dashPage.hidden,#editorPage.hidden,#inventoryPage.hidden{display:none!important;}
 #editorPage{display:block;}
 
-.dash-header{max-width:960px;margin:0 auto 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.dash-header{max-width:1080px;margin:0 auto 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
 .dash-title{font-size:22px;font-weight:700;color:#1e293b;}
 .dash-title span{color:var(--primary);}
 .dash-actions{display:flex;gap:10px;}
@@ -29,19 +29,22 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 .btn-warn{background:var(--warn);color:#fff;}
 .btn-sm{padding:6px 12px;font-size:12px;border-radius:6px;}
 
-/* Stats bar */
-.dash-stats{max-width:960px;margin:0 auto 24px;display:flex;gap:16px;flex-wrap:wrap;}
-.stat-card{background:#fff;border-radius:12px;padding:16px 22px;flex:1;min-width:150px;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+/* Stats Grid Layout */
+.dash-stats{max-width:1080px;margin:0 auto 24px;display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;}
+.stat-card{background:#fff;border-radius:12px;padding:16px 22px;box-shadow:0 1px 4px rgba(0,0,0,.08);border-left:4px solid var(--primary);}
+.stat-card.success{border-left-color:var(--success);}
+.stat-card.warn{border-left-color:var(--warn);}
+.stat-card.danger{border-left-color:var(--danger);}
 .stat-card .label{font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
-.stat-card .value{font-size:22px;font-weight:700;color:#1e293b;margin-top:4px;}
+.stat-card .value{font-size:20px;font-weight:700;color:#1e293b;margin-top:4px;}
 
 /* Search & filter */
-.dash-controls{max-width:960px;margin:0 auto 20px;display:flex;gap:10px;align-items:center;}
+.dash-controls{max-width:1080px;margin:0 auto 20px;display:flex;gap:10px;align-items:center;}
 .dash-search{flex:1;padding:9px 14px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;}
 .dash-search:focus{border-color:var(--primary);}
 
 /* Bill cards grid */
-.bills-grid{max-width:960px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+.bills-grid{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
 .bill-card{background:#fff;border-radius:12px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,.08);border:1.5px solid transparent;transition:border-color .15s,box-shadow .15s;cursor:pointer;}
 .bill-card:hover{border-color:var(--primary);box-shadow:0 4px 12px rgba(37,99,235,.12);}
 .bill-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
@@ -56,7 +59,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 .badge.upi{background:#e0f2fe;color:#0369a1;}
 .badge.danger{background:#fee2e2;color:#991b1b;}
 .bill-card-actions{display:flex;gap:6px;}
-.no-bills{max-width:960px;margin:40px auto;text-align:center;color:#9ca3af;padding:60px 0;}
+.no-bills{max-width:1080px;margin:40px auto;text-align:center;color:#9ca3af;padding:60px 0;}
 .no-bills h3{font-size:20px;margin-bottom:8px;color:#6b7280;}
 
 /* ─── EDITOR TOOLBAR ─── */
@@ -93,11 +96,10 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 .bill-to .state-row .lbl{font-weight:normal;}
 .bill-to .state-row .val{font-weight:bold;}
 
-/* Isolated Positioning Context for Dropdowns */
 .name-cell-container{position:relative; width:100%; height:100%; min-height:22px;}
 .item-name-input{width:100%; min-height:20px; outline:none; padding:2px;}
 
-/* ─── SUGGESTION DROPDOWN MODULE ─── */
+/* ─── SUGGESTION DROPDOWN BOX ─── */
 .suggestion-box{
   position:absolute;top:100%;left:0;width:100%;background:#fff;
   border:1px solid #cbd5e1;border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.1);
@@ -150,17 +152,16 @@ table.taxbreak tr.total-row td{font-weight:bold;border-top:1.5px solid var(--lin
 [contenteditable="true"]:focus{background:#fff7cc;box-shadow:0 0 0 1px #e0c200;}
 .add-row-btn{margin:8px 14px;background:#16a34a;color:#fff;border:none;padding:6px 12px;border-radius:5px;font-size:12px;cursor:pointer;font-weight:600;}
 
-/* ─── INVENTORY STOCK TABLE UI ─── */
-table.inventory-table{width:100%;max-width:960px;margin:20px auto;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+/* ─── INVENTORY TABLE UI ─── */
+table.inventory-table{width:100%;max-width:1080px;margin:20px auto;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08);}
 table.inventory-table th, table.inventory-table td{padding:12px 16px;text-align:left;border-bottom:1px solid #e2e8f0;font-size:13px;}
 table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
-.inventory-form{max-width:960px;margin:0 auto 20px;background:#fff;padding:20px;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);display:flex;gap:10px;flex-wrap:wrap;}
+.inventory-form{max-width:1080px;margin:0 auto 20px;background:#fff;padding:20px;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);display:flex;gap:10px;flex-wrap:wrap;}
 .inventory-form input{padding:8px 12px;border:1.5px solid #d1d5db;border-radius:6px;font-size:13px;flex:1;min-width:120px;}
 .stock-status{font-weight:bold;padding:2px 6px;border-radius:4px;font-size:11px;}
 .stock-in{background:#dcfce7;color:#166534;}
 .stock-out{background:#fee2e2;color:#991b1b;}
 
-/* ─── PRINT ─── */
 @media print{
  #dashPage, #inventoryPage{display:none!important;}
  .toolbar{display:none!important;}
@@ -175,7 +176,6 @@ table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
  [contenteditable="true"]:hover,[contenteditable="true"]:focus{background:transparent;box-shadow:none;}
  table.items{page-break-inside:auto;}
  tr{page-break-inside:avoid;page-break-after:auto;}
- .hide-if-empty-print{display:none!important;}
 }
 </style>
 </head>
@@ -193,9 +193,12 @@ table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
 
  <div class="dash-stats">
  <div class="stat-card"><div class="label">Total Bills</div><div class="value" id="statTotal">0</div></div>
- <div class="stat-card"><div class="label">This Month</div><div class="value" id="statMonth">0</div></div>
- <div class="stat-card"><div class="label">Total Revenue</div><div class="value" id="statRevenue">₹0</div></div>
- <div class="stat-card"><div class="label">Pending Balance</div><div class="value" id="statPending">₹0</div></div>
+ <div class="stat-card success"><div class="label">Total Revenue</div><div class="value" id="statRevenue">₹0</div></div>
+ <div class="stat-card warn"><div class="label">Net Income (Profit)</div><div class="value" id="statIncome">₹0</div></div>
+ <div class="stat-card danger"><div class="label">Total Returns</div><div class="value" id="statReturns">₹0</div></div>
+ <div class="stat-card"><div class="label">Total Investment (Stock + GST)</div><div class="value" id="statStockCost">₹0</div></div>
+ <div class="stat-card success"><div class="label">Expected Stock Revenue (+ GST)</div><div class="value" id="statStockSale">₹0</div></div>
+ <div class="stat-card danger"><div class="label">Pending Balance</div><div class="value" id="statPending">₹0</div></div>
  </div>
 
  <div class="dash-controls">
@@ -222,16 +225,27 @@ table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
  <div class="inventory-form">
  <input type="text" id="invName" placeholder="Item Name">
  <input type="text" id="invHsn" placeholder="HSN Code">
- <input type="number" id="invQty" placeholder="Initial Quantity (Stock)">
+ <input type="number" id="invQty" placeholder="Available Stock (Quantity)">
  <input type="text" id="invUnit" placeholder="Unit (e.g. Kg, Pcs)">
- <input type="number" id="invPrice" placeholder="Price/Unit (₹)">
+ <input type="number" id="invCostPrice" placeholder="Cost Price (Got at ₹)">
+ <input type="number" id="invSellPrice" placeholder="Selling Price (Bill at ₹)">
  <input type="number" id="invGst" placeholder="GST Rate (%)" value="5">
  <button class="btn btn-success" onclick="addInventoryItem()">+ Add to Stock</button>
  </div>
 
  <table class="inventory-table">
  <thead>
-   <tr><th>Item Name</th><th>HSN</th><th>Available Stock</th><th>Unit</th><th>Base Price</th><th>GST</th><th>Status</th><th>Actions</th></tr>
+   <tr>
+     <th>Item Name</th>
+     <th>HSN</th>
+     <th>Available Stock</th>
+     <th>Unit</th>
+     <th>Cost Price (Before Tax)</th>
+     <th>Selling Price</th>
+     <th>GST</th>
+     <th>Status</th>
+     <th>Actions</th>
+   </tr>
  </thead>
  <tbody id="inventoryBody"></tbody>
  </table>
@@ -356,14 +370,12 @@ table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
 </div>
 
 <script>
-/* ═══════════════════════════════════════════
- DUAL ENGINE CLOUD CORE LAYOUT
-═══════════════════════════════════════════ */
 let allBills = []; 
 let inventory = [];
 let currentBillId = null;
 let items = [];
 let autoSaveTimer = null;
+let totalReturnsAccumulator = 0;
 
 async function fetchBillsFromCloud() {
   const el = document.getElementById('saveStatus');
@@ -418,9 +430,6 @@ async function uploadInventoryToCloud() {
   } catch (e) { alert("Stock update failed."); }
 }
 
-/* ═══════════════════════════════════════════
- INVENTORY LOGIC ENGINE
-═══════════════════════════════════════════ */
 function renderInventoryGrid() {
   const tbody = document.getElementById('inventoryBody');
   if(!tbody) return;
@@ -431,12 +440,14 @@ function renderInventoryGrid() {
       <td>${it.hsn || '—'}</td>
       <td><span style="font-size:14px; font-weight:bold;">${it.quantity}</span></td>
       <td>${it.unit}</td>
-      <td>₹${it.price}</td>
+      <td>₹${it.costPrice || 0}</td>
+      <td>₹${it.sellingPrice || 0}</td>
       <td>${it.gstPct}%</td>
       <td><span class="stock-status ${isOut ? 'stock-out':'stock-in'}">${isOut ? 'OUT OF STOCK':'AVAILABLE'}</span></td>
       <td><button class="btn btn-danger btn-sm" onclick="removeInventoryItem(${idx})">✕ Remove</button></td>
     </tr>`;
   }).join('');
+  if(document.getElementById('dashPage').style.display !== 'none') renderDashboard();
 }
 
 function addInventoryItem() {
@@ -444,18 +455,20 @@ function addInventoryItem() {
   const hsn = document.getElementById('invHsn').value.trim();
   const qty = parseFloat(document.getElementById('invQty').value) || 0;
   const unit = document.getElementById('invUnit').value.trim() || 'Kg';
-  const price = parseFloat(document.getElementById('invPrice').value) || 0;
+  const costPrice = parseFloat(document.getElementById('invCostPrice').value) || 0;
+  const sellingPrice = parseFloat(document.getElementById('invSellPrice').value) || 0;
   const gstPct = parseFloat(document.getElementById('invGst').value) || 5;
 
   if(!name) { alert("Item name required"); return; }
   
-  inventory.push({ name, hsn, quantity: qty, unit, price, gstPct });
+  inventory.push({ name, hsn, quantity: qty, unit, costPrice, sellingPrice, gstPct });
   uploadInventoryToCloud();
 
   document.getElementById('invName').value = '';
   document.getElementById('invHsn').value = '';
   document.getElementById('invQty').value = '';
-  document.getElementById('invPrice').value = '';
+  document.getElementById('invCostPrice').value = '';
+  document.getElementById('invSellPrice').value = '';
 }
 
 function removeInventoryItem(idx) {
@@ -469,32 +482,61 @@ function showPage(page){
  document.getElementById('editorPage').classList.toggle('hidden', page!=='editor');
  document.getElementById('inventoryPage').classList.toggle('hidden', page!=='inventory');
  
- if(page==='dash') fetchBillsFromCloud();
+ if(page==='dash') { fetchBillsFromCloud(); fetchInventoryFromCloud(); }
  if(page==='inventory') fetchInventoryFromCloud();
 }
 function goToDashboard(){ showPage('dash'); }
 
 /* ═══════════════════════════════════════════
- DASHBOARD RENDERING PIPELINES
+ ADVANCED ANALYTICS DASHBOARD ENGINE
 ═══════════════════════════════════════════ */
-function fmtINR(n){
- return '₹'+(Math.round((n+Number.EPSILON)*100)/100).toLocaleString('en-IN',{minimumFractionDigits:0,maximumFractionDigits:0});
-}
 function renderDashboard(){
  const q = (document.getElementById('searchInput').value||'').toLowerCase();
  let bills = [...allBills];
 
- const now = new Date();
- const thisMonth = bills.filter(b=>{
- if(!b.invoiceDate) return false;
- const [d,m,y] = b.invoiceDate.split('/');
- return parseInt(m)===now.getMonth()+1 && parseInt(y)===now.getFullYear();
+ let totalRevenue = 0;
+ let netIncomeProfit = 0;
+ let totalPendingBalance = 0;
+
+ bills.forEach(b => {
+   totalRevenue += (b.grandTotal || 0);
+   totalPendingBalance += (b.balance || 0);
+   
+   if (b.items && Array.isArray(b.items)) {
+     b.items.forEach(item => {
+       const stockMatch = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
+       const cost = stockMatch ? (stockMatch.costPrice || 0) : 0;
+       const sale = item.price || 0;
+       const itemQty = item.qty || 0;
+       
+       netIncomeProfit += (sale - cost) * itemQty;
+     });
+   }
+ });
+
+ // Validated Formulas: BOTH Stock Investment and Stock Revenue now properly add custom GST
+ let totalStockCostValuationWithGST = 0;
+ let totalExpectedStockRevenueWithGST = 0;
+
+ inventory.forEach(i => {
+   const taxMultiplier = 1 + ((i.gstPct || 5) / 100);
+   
+   // 1. Investment: Quantity * Cost Price * GST Multiplier
+   const baseCostValue = (i.quantity || 0) * (i.costPrice || 0);
+   totalStockCostValuationWithGST += (baseCostValue * taxMultiplier);
+   
+   // 2. Revenue: Quantity * Selling Price * GST Multiplier
+   const baseSaleValue = (i.quantity || 0) * (i.sellingPrice || 0);
+   totalExpectedStockRevenueWithGST += (baseSaleValue * taxMultiplier);
  });
  
  document.getElementById('statTotal').textContent = bills.length;
- document.getElementById('statMonth').textContent = thisMonth.length;
- document.getElementById('statRevenue').textContent = fmtINR(bills.reduce((s,b)=>s+(b.grandTotal||0),0));
- document.getElementById('statPending').textContent = fmtINR(bills.reduce((s,b)=>s+(b.balance||0),0));
+ document.getElementById('statRevenue').textContent = fmtINR(totalRevenue);
+ document.getElementById('statIncome').textContent = fmtINR(netIncomeProfit);
+ document.getElementById('statReturns').textContent = fmtINR(totalReturnsAccumulator);
+ document.getElementById('statStockCost').textContent = fmtINR(totalStockCostValuationWithGST);
+ document.getElementById('statStockSale').textContent = fmtINR(totalExpectedStockRevenueWithGST);
+ document.getElementById('statPending').textContent = fmtINR(totalPendingBalance);
 
  if(q){
  bills = bills.filter(b=> (b.customerName||'').toLowerCase().includes(q) || (b.invoiceNo||'').toLowerCase().includes(q) );
@@ -523,12 +565,13 @@ function renderDashboard(){
  }).join('');
 }
 
-// Global Dashboard Item Delete Configuration Trigger (Safe Stock Return Tracking)
 function confirmDelete(id){
  const targetBill = allBills.find(b => b.id === id);
  if(!targetBill) return;
- if(!confirm("Delete this invoice completely? This returns sold stock amounts to inventory.")) return;
+ if(!confirm("Delete this invoice completely? This returns sold stock amounts to inventory and logs returned totals.")) return;
  
+ totalReturnsAccumulator += (targetBill.grandTotal || 0);
+
  if (targetBill.items && Array.isArray(targetBill.items)) {
    targetBill.items.forEach(item => {
      const stockItem = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
@@ -539,21 +582,18 @@ function confirmDelete(id){
  }
 
  allBills = allBills.filter(b=>b.id!==id);
- 
  Promise.all([uploadInventoryToCloud(), uploadBillsToCloud()]).then(() => {
    renderDashboard();
  });
 }
 
 /* ═══════════════════════════════════════════
- INVOICE RECORD STATE ENGINE
+ INVOICE COMPILER AUTOMATIONS
 ═══════════════════════════════════════════ */
 function startNewInvoice(){
  currentBillId = 'bill_'+Date.now();
  items=[{name:'',hsn:'',qty:1,unit:'Kg',price:0,gstPct:5}];
  showPage('editor');
- 
- // Robust array calculation logic check to prevent load crashes
  const nextInvoiceNo = allBills && allBills.length ? String(allBills.length + 1) : "1";
  resetEditorFields({ 
    invoiceNo: nextInvoiceNo, 
@@ -634,23 +674,24 @@ async function printAndSave(){
  window.print();
 }
 
-// Editor View Delete Action Logic Handler (Fixed Stock Refund Routine)
 function deleteCurrent(){
  if(!currentBillId) return;
  if(!confirm(`Delete this bill entirely? This returns sold stock amounts to inventory.`)) return;
  
  const targetBill = allBills.find(b => b.id === currentBillId);
- if (targetBill && targetBill.items) {
-   targetBill.items.forEach(item => {
-     const stockItem = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
-     if (stockItem) {
-       stockItem.quantity += (parseFloat(item.qty) || 0);
-     }
-   });
+ if (targetBill) {
+   totalReturnsAccumulator += (targetBill.grandTotal || 0);
+   if (targetBill.items) {
+     targetBill.items.forEach(item => {
+       const stockItem = inventory.find(i => i.name.toLowerCase() === item.name.toLowerCase());
+       if (stockItem) {
+         stockItem.quantity += (parseFloat(item.qty) || 0);
+       }
+     });
+   }
  }
 
  allBills = allBills.filter(b=>b.id!==currentBillId);
- 
  showSaveStatus("Updating cloud archives...");
  Promise.all([uploadInventoryToCloud(), uploadBillsToCloud()]).then(() => {
    currentBillId = null;
@@ -659,10 +700,8 @@ function deleteCurrent(){
 }
 
 /* ═══════════════════════════════════════════
- ITEMS TABLE & STABLE DROPDOWN ENGINE
+ ITEMS ENTRY GRID INTERFACES
 ═══════════════════════════════════════════ */
-const fmt = n=>(Math.round((n+Number.EPSILON)*100)/100).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
-
 function renderItems(){
  const body=document.getElementById('itemsBody');
  body.innerHTML='';
@@ -705,10 +744,7 @@ function attachEditListeners(){
      const rawText = nameInput.innerText || nameInput.textContent || '';
      const query = rawText.replace(/[\n\r\t]/g, '').replace(/\u00a0/g, ' ').trim().toLowerCase();
      
-     if (!query) { 
-       suggestBox.style.display = 'none'; 
-       return; 
-     }
+     if (!query) { suggestBox.style.display = 'none'; return; }
 
      const matches = inventory.filter(i => i.name.toLowerCase().includes(query));
 
@@ -719,7 +755,7 @@ function attachEditListeners(){
          const isOut = match.quantity <= 0;
          return `<div class="suggestion-item" data-name="${match.name}">
            <span>${match.name}</span>
-           <span class="item-stock ${isOut ? 'out':''}">${isOut ? 'Out of Stock' : `${match.quantity} ${match.unit} left`}</span>
+           <span class="item-stock ${isOut ? 'out':''}">${isOut ? 'Out of Stock' : `${match.quantity} ${match.unit} left (₹${match.sellingPrice})`}</span>
          </div>`;
        }).join('');
      }
@@ -737,7 +773,7 @@ function attachEditListeners(){
      if (match) {
        items[idx].name = match.name;
        items[idx].hsn = match.hsn;
-       items[idx].price = match.price;
+       items[idx].price = match.sellingPrice || match.price || 0;
        items[idx].gstPct = match.gstPct;
        items[idx].unit = match.unit;
        

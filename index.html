@@ -1,4 +1,305 @@
-<!-- Replace the entire script block at the bottom of your index.html with this -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sree Valli Traders — Invoice Manager</title>
+<style>
+:root{
+ --ink:#1a1a1a;--line:#333;--line-light:#888;--bg:#fff;--accent:#f4f4f4;
+ --primary:#2563eb;--success:#16a34a;--danger:#b91c1c;--warn:#d97706;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);}
+
+/* ─── DASHBOARD ─── */
+#dashPage{display:block;padding:32px 24px;min-height:100vh;}
+#dashPage.hidden,#editorPage.hidden{display:none!important;}
+#editorPage{display:block;}
+
+.dash-header{max-width:960px;margin:0 auto 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.dash-title{font-size:22px;font-weight:700;color:#1e293b;}
+.dash-title span{color:var(--primary);}
+.dash-actions{display:flex;gap:10px;}
+.btn{border:none;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s;}
+.btn:hover{opacity:.88;}
+.btn-primary{background:var(--primary);color:#fff;}
+.btn-success{background:var(--success);color:#fff;}
+.btn-danger{background:var(--danger);color:#fff;}
+.btn-secondary{background:#4b5563;color:#fff;}
+.btn-warn{background:var(--warn);color:#fff;}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:6px;}
+
+/* Stats bar */
+.dash-stats{max-width:960px;margin:0 auto 24px;display:flex;gap:16px;flex-wrap:wrap;}
+.stat-card{background:#fff;border-radius:12px;padding:16px 22px;flex:1;min-width:150px;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.stat-card .label{font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+.stat-card .value{font-size:22px;font-weight:700;color:#1e293b;margin-top:4px;}
+
+/* Search & filter */
+.dash-controls{max-width:960px;margin:0 auto 20px;display:flex;gap:10px;align-items:center;}
+.dash-search{flex:1;padding:9px 14px;border:1.5px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;}
+.dash-search:focus{border-color:var(--primary);}
+
+/* Bill cards grid */
+.bills-grid{max-width:960px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+.bill-card{background:#fff;border-radius:12px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,.08);border:1.5px solid transparent;transition:border-color .15s,box-shadow .15s;cursor:pointer;}
+.bill-card:hover{border-color:var(--primary);box-shadow:0 4px 12px rgba(37,99,235,.12);}
+.bill-card-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.bill-inv{font-size:13px;font-weight:700;color:var(--primary);}
+.bill-date{font-size:11px;color:#6b7280;}
+.bill-customer{font-size:14px;font-weight:600;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bill-amount{font-size:18px;font-weight:700;color:#1e293b;margin-bottom:12px;}
+.bill-meta{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;background:#e0e7ff;color:#3730a3;}
+.badge.cash{background:#dcfce7;color:#166534;}
+.badge.credit{background:#fef9c3;color:#854d0e;}
+.badge.upi{background:#e0f2fe;color:#0369a1;}
+.bill-card-actions{display:flex;gap:6px;}
+.no-bills{max-width:960px;margin:40px auto;text-align:center;color:#9ca3af;padding:60px 0;}
+.no-bills h3{font-size:20px;margin-bottom:8px;color:#6b7280;}
+
+/* ─── EDITOR TOOLBAR ─── */
+.toolbar{background:#1e293b;padding:10px 16px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;position:sticky;top:0;z-index:100;}
+.toolbar button,.toolbar label.upload-btn{background:#2563eb;color:#fff;border:none;padding:8px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap;}
+.toolbar button.secondary{background:#4b5563;}
+.toolbar button.danger{background:#b91c1c;}
+.toolbar button.success{background:#16a34a;}
+.toolbar button:hover{opacity:.88;}
+.toolbar .hint{font-size:11px;color:#94a3b8;margin-left:auto;}
+.toolbar .save-status{font-size:11px;padding:4px 10px;border-radius:20px;background:#1e3a5f;color:#93c5fd;font-weight:600;}
+
+/* ─── INVOICE PAGE ─── */
+.page{max-width:800px;margin:24px auto;background:var(--bg);border:1.5px solid var(--line);}
+.title-bar{text-align:center;font-weight:bold;font-size:15px;padding:6px 0;border-bottom:1.5px solid var(--line);letter-spacing:.5px;}
+.top-section{display:flex;border-bottom:1.5px solid var(--line);}
+.seller-info{flex:1.6;padding:10px 14px;border-right:1.5px solid var(--line);}
+.invoice-meta{flex:1;padding:10px 14px;}
+.company-name{font-size:17px;font-weight:bold;margin:0 0 6px;}
+.seller-info .addr-line{font-size:11.5px;margin-bottom:6px;}
+.kv-line{font-size:11.5px;margin-bottom:4px;display:flex;gap:4px;align-items:center;}
+.kv-line .lbl{white-space:nowrap;}
+.kv-line .val{font-weight:bold;}
+.two-col{display:flex;gap:18px;}
+.two-col>div{flex:1;}
+.payment-mode-select{font-size:11.5px;font-weight:bold;font-family:inherit;border:1px solid var(--line-light);border-radius:3px;padding:1px 4px;background:#fffbe6;cursor:pointer;}
+.payment-mode-select:hover{background:#fff7cc;}
+.payment-mode-print{display:none;}
+.bill-to{padding:10px 14px;border-bottom:1.5px solid var(--line);}
+.bill-to .section-label{font-weight:bold;font-size:12px;margin-bottom:4px;}
+.bill-to .customer-name{font-weight:bold;font-size:13.5px;margin-bottom:3px;}
+.bill-to .addr-line{font-size:11.5px;margin-bottom:4px;}
+.bill-to .state-row{display:flex;gap:6px;font-size:11.5px;}
+.bill-to .state-row .lbl{font-weight:normal;}
+.bill-to .state-row .val{font-weight:bold;}
+table.items{width:100%;border-collapse:collapse;font-size:11.5px;table-layout:fixed;}
+table.items th,table.items td{border-bottom:1px solid var(--line-light);padding:5px 6px;text-align:left;vertical-align:top;white-space:nowrap;overflow:hidden;}
+table.items td[data-field="name"],table.items th:nth-child(2){white-space:normal;word-wrap:break-word;overflow-wrap:break-word;}
+table.items td.del-cell{overflow:visible;text-align:center;padding:5px 2px;}
+table.items thead th{border-top:1.5px solid var(--line);border-bottom:1.5px solid var(--line);font-weight:bold;background:var(--accent);}
+table.items td.num,table.items th.num{text-align:right;}
+table.items td.center,table.items th.center{text-align:center;}
+table.items col.col-idx{width:3%;}table.items col.col-name{width:24%;}
+table.items col.col-hsn{width:11%;}table.items col.col-qty{width:8%;}
+table.items col.col-unit{width:7%;}table.items col.col-price{width:13%;}
+table.items col.col-gst{width:16%;}table.items col.col-amt{width:14%;}
+table.items col.col-del{width:4%;}
+.gst-rate-edit{border-bottom:1px dotted var(--line-light);padding:0 1px;}
+.row-del{background:#fff0f0;color:#b91c1c;border:1px solid #f3c0c0;border-radius:4px;width:16px;height:16px;line-height:1;font-size:10px;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;}
+tr.total-row td{border-top:1.5px solid var(--line);border-bottom:1.5px solid var(--line);font-weight:bold;}
+.summary-bar{border-bottom:1.5px solid var(--line);font-size:11.5px;}
+.summary-bar .row{display:flex;}
+.summary-bar .row>div{padding:6px 14px;flex:1;}
+.summary-bar .row>div:first-child{border-right:1.5px solid var(--line);}
+.summary-bar .row:not(:last-child){border-bottom:1px solid var(--line-light);}
+.summary-bar .lbl{font-weight:normal;}
+.summary-bar .val{font-weight:bold;}
+table.taxbreak{width:100%;border-collapse:collapse;font-size:11px;border-bottom:1.5px solid var(--line);}
+table.taxbreak th,table.taxbreak td{border:1px solid var(--line-light);padding:5px 8px;text-align:right;}
+table.taxbreak th{background:var(--accent);font-weight:bold;text-align:center;}
+table.taxbreak td.left,table.taxbreak th.left{text-align:left;}
+table.taxbreak td.center{text-align:center;}
+table.taxbreak tr.total-row td{font-weight:bold;border-top:1.5px solid var(--line);}
+.footer{display:flex;}
+.footer>div{flex:1;padding:10px 14px;font-size:11.5px;min-height:70px;}
+.footer>div:first-child{border-right:1.5px solid var(--line);}
+.footer .section-label{font-weight:bold;margin-bottom:4px;}
+.signature-area{text-align:center;margin-top:38px;font-size:11.5px;}
+[contenteditable="true"]{outline:none;border-radius:2px;}
+[contenteditable="true"]:hover{background:#fffbe6;}
+[contenteditable="true"]:focus{background:#fff7cc;box-shadow:0 0 0 1px #e0c200;}
+.add-row-btn{margin:8px 14px;background:#16a34a;color:#fff;border:none;padding:6px 12px;border-radius:5px;font-size:12px;cursor:pointer;font-weight:600;}
+
+/* hidden eway/van rows on print */
+.eway-row.empty-print, .van-row.empty-print{ /* handled by JS adding class */ }
+
+/* ─── PRINT ─── */
+@media print{
+ #dashPage{display:none!important;}
+ .toolbar{display:none!important;}
+ #editorPage{display:block!important;}
+ @page{size:A4;margin:14mm 12mm;}
+ html,body{background:#fff;padding:0;margin:0;width:100%;}
+ .page{max-width:100%;width:100%;border:1.5px solid var(--line);margin:0 auto;box-sizing:border-box;overflow:hidden;}
+ table.items,table.taxbreak{width:100%!important;max-width:100%;}
+ .row-del,.add-row-btn{display:none!important;}
+ .payment-mode-select{display:none!important;visibility:hidden!important;width:0!important;height:0!important;position:absolute!important;left:-9999px!important;}
+ .payment-mode-print{display:inline!important;visibility:visible!important;}
+ [contenteditable="true"]:hover,[contenteditable="true"]:focus{background:transparent;box-shadow:none;}
+ table.items{page-break-inside:auto;}
+ tr{page-break-inside:avoid;page-break-after:auto;}
+ .hide-if-empty-print{display:none!important;}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ DASHBOARD PAGE ═══════════════════ -->
+<div id="dashPage">
+ <div class="dash-header">
+ <div class="dash-title">🧾 <span>Sree Valli Traders</span> — Shared Invoice Manager</div>
+ <div class="dash-actions">
+ <button class="btn btn-primary" onclick="startNewInvoice()">+ New Bill</button>
+ </div>
+ </div>
+
+ <div class="dash-stats">
+ <div class="stat-card"><div class="label">Total Bills</div><div class="value" id="statTotal">0</div></div>
+ <div class="stat-card"><div class="label">This Month</div><div class="value" id="statMonth">0</div></div>
+ <div class="stat-card"><div class="label">Total Revenue</div><div class="value" id="statRevenue">₹0</div></div>
+ <div class="stat-card"><div class="label">Pending Balance</div><div class="value" id="statPending">₹0</div></div>
+ </div>
+
+ <div class="dash-controls">
+ <input class="dash-search" type="text" id="searchInput" placeholder="🔍 Search shared bills by customer, invoice no..." oninput="renderDashboard()">
+ <button class="btn btn-secondary btn-sm" onclick="fetchBillsFromCloud()">↻ Sync Global Cloud</button>
+ </div>
+
+ <div class="bills-grid" id="billsGrid"></div>
+ <div class="no-bills hidden" id="noBills">
+ <h3>No shared bills found</h3>
+ <p>Click <strong>+ New Bill</strong> to add one to the network.</p>
+ </div>
+</div>
+
+<!-- ═══════════════════ EDITOR PAGE ═══════════════════ -->
+<div id="editorPage" class="hidden">
+ <div class="toolbar">
+ <button onclick="goToDashboard()">← Dashboard</button>
+ <button class="success" onclick="printAndSave()">🖨️ Print / Save PDF</button>
+ <button class="secondary" onclick="addItemRow()">+ Add Row</button>
+ <button class="secondary" onclick="recalcAll()">↻ Recalc</button>
+ <button class="danger" onclick="deleteCurrent()">🗑 Delete Bill</button>
+ <span class="save-status" id="saveStatus">✓ Connected</span>
+ <span class="hint">Global Sharing Mode • Typing auto-syncs live to everyone</span>
+ </div>
+
+ <div class="page" id="invoicePage">
+ <div class="title-bar" contenteditable="true" data-save="titleBar">Tax Invoice</div>
+ <div class="top-section">
+ <div class="seller-info">
+ <div class="company-name" contenteditable="true" data-save="sellerName">SREE VALLI TRADERS</div>
+ <div class="addr-line" contenteditable="true" data-save="sellerAddr">GROUND FLOOR 24-59-13 PEDAGANTYADA VINAYAKA NAGAR Visakhapatnam</div>
+ <div class="two-col">
+ <div>
+ <div class="kv-line"><span class="lbl">Phone:</span><span class="val" contenteditable="true" data-save="sellerPhone">7989088940</span></div>
+ <div class="kv-line"><span class="lbl">GSTIN:</span><span class="val" contenteditable="true" id="sellerGstin" data-save="sellerGstin">37AJKPV2937N1ZB</span></div>
+ </div>
+ <div>
+ <div class="kv-line"><span class="lbl">Email:</span><span class="val" contenteditable="true" data-save="sellerEmail">radhavudathu1971@gmail.com</span></div>
+ <div class="kv-line"><span class="lbl">State:</span><span class="val" contenteditable="true" id="sellerState" data-save="sellerState">37-Andhra Pradesh</span></div>
+ </div>
+ </div>
+ </div>
+ <div class="invoice-meta">
+ <div class="kv-line"><span class="lbl">Invoice No.:</span><span class="val" contenteditable="true" id="invoiceNo" data-save="invoiceNo">1</span></div>
+ <div class="kv-line"><span class="lbl">Date:</span><span class="val" contenteditable="true" id="invoiceDate" data-save="invoiceDate">01/01/2026</span></div>
+ <div class="kv-line" id="ewayRow"><span class="lbl">E-Way Bill No.:</span><span class="val" contenteditable="true" id="ewayBill" data-save="ewayBill"></span></div>
+ <div class="kv-line" id="vanRow"><span class="lbl">Van No.:</span><span class="val" contenteditable="true" id="vanNo" data-save="vanNo"></span></div>
+ <div class="kv-line"><span class="lbl">Place Of Supply:</span><span class="val" contenteditable="true" id="placeOfSupply" data-save="placeOfSupply">37-Andhra Pradesh</span></div>
+ <div class="kv-line">
+ <span class="lbl">Payment Mode:</span>
+ <select class="payment-mode-select" id="paymentMode">
+ <option value="Cash">Cash</option><option value="Credit">Credit</option>
+ <option value="UPI">UPI</option><option value="Bank Transfer">Bank Transfer</option>
+ <option value="Cheque">Cheque</option><option value="Card">Card</option>
+ </select>
+ <span class="val payment-mode-print" id="paymentModePrint">Cash</span>
+ </div>
+ </div>
+ </div>
+
+ <div class="bill-to">
+ <div class="section-label">Bill To:</div>
+ <div class="customer-name" contenteditable="true" data-save="customerName">Customer Name</div>
+ <div class="addr-line" contenteditable="true" data-save="customerAddr">Customer Address</div>
+ <div class="state-row">
+ <span class="lbl">State:</span>
+ <span class="val" contenteditable="true" id="billToState" data-save="billToState">State</span>
+ <span class="lbl" style="margin-left:18px">GSTIN:</span>
+ <span class="val" contenteditable="true" id="billToGstin" data-save="billToGstin">GSTIN</span>
+ </div>
+ </div>
+
+ <table class="items" id="itemsTable">
+ <colgroup>
+ <col class="col-idx"><col class="col-name"><col class="col-hsn"><col class="col-qty">
+ <col class="col-unit"><col class="col-price"><col class="col-gst"><col class="col-amt"><col class="col-del">
+ </colgroup>
+ <thead><tr>
+ <th>#</th><th>Item Name</th><th>HSN/ SAC</th>
+ <th class="num">Quantity</th><th class="center">Unit</th>
+ <th class="num">Price/ Unit(₹)</th><th class="num">GST(₹)</th>
+ <th class="num">Amount(₹)</th><th></th>
+ </tr></thead>
+ <tbody id="itemsBody"></tbody>
+ <tfoot><tr class="total-row">
+ <td colspan="3">Total</td>
+ <td class="num" id="totQty">0</td><td></td><td></td>
+ <td class="num" id="totGst">₹0.00</td>
+ <td class="num" id="totAmt">₹0.00</td><td></td>
+ </tr></tfoot>
+ </table>
+ <button class="add-row-btn" onclick="addItemRow()">+ Add Item Row</button>
+
+ <div class="summary-bar">
+ <div class="row">
+ <div><span class="lbl">Sub Total: </span><span class="val">₹<span id="subTotal">0.00</span></span></div>
+ <div><span class="lbl">Total: </span><span class="val">₹<span id="grandTotal">0.00</span></span><span id="amtWords"> (Zero Rupees only)</span></div>
+ </div>
+ <div class="row">
+ <div><span class="lbl">Received: </span>₹<span class="val" contenteditable="true" id="received" data-save="received">0.00</span></div>
+ <div><span class="lbl">Balance: </span>₹<span class="val" id="balance">0.00</span></div>
+ </div>
+ </div>
+
+ <table class="taxbreak">
+ <thead>
+ <tr><th class="left" rowspan="2">HSN/ SAC</th><th rowspan="2">Taxable Amount (₹)</th><th colspan="2">CGST</th><th colspan="2">SGST</th><th rowspan="2">Total Tax (₹)</th></tr>
+ <tr><th>Rate (%)</th><th>Amt (₹)</th><th>Rate (%)</th><th>Amt (₹)</th></tr>
+ </thead>
+ <tbody id="taxBreakBody"></tbody>
+ <tfoot><tr class="total-row">
+ <td class="left">TOTAL</td>
+ <td id="tbTaxableTotal">0.00</td><td></td>
+ <td id="tbCgstAmtTotal">0.00</td><td></td>
+ <td id="tbSgstAmtTotal">0.00</td>
+ <td id="tbTaxTotal">0.00</td>
+ </tr></tfoot>
+ </table>
+
+ <div class="footer">
+ <div>
+ <div class="section-label">Terms &amp; Conditions:</div>
+ <div contenteditable="true" data-save="terms">Thank you for doing business with us.</div>
+ </div>
+ <div>
+ <div class="section-label" contenteditable="true" data-save="forLabel">For SREE VALLI TRADERS:</div>
+ <div class="signature-area" contenteditable="true" data-save="signature">Authorized Signatory</div>
+ </div>
+ </div>
+ </div>
+</div>
+
 <script>
 /* ═══════════════════════════════════════════
  GLOBAL STATE & SECURE BACKEND ROUTING
@@ -408,17 +709,18 @@ function recalcAll(){
  autoSave();
 }
 
-document.getElementById('received').addEventListener('input',recalcAll);
-document.getElementById('received').addEventListener('blur',recalcAll);
+// Safe Native Form Target Bindings
+document.getElementById('received')?.addEventListener('input',recalcAll);
+document.getElementById('received')?.addEventListener('blur',recalcAll);
 
 /* ═══════════════════════════════════════════
- AUTO-SAVE EVENT LISTENERS
+ AUTO-SAVE EVENT LISTENERS (NULL-SAFE INTERFACES)
 ═══════════════════════════════════════════ */
-document.getElementById('invoicePage').addEventListener('input', e=>{
+document.getElementById('invoicePage')?.addEventListener('input', e=>{
  if(e.target.closest('#itemsBody')) return; 
  autoSave();
 });
-document.getElementById('paymentMode').addEventListener('change',()=>{ syncPaymentModePrint(); autoSave(); });
+document.getElementById('paymentMode')?.addEventListener('change',()=>{ syncPaymentModePrint(); autoSave(); });
 
 /* ═══════════════════════════════════════════
  NUMBER TO WORDS
@@ -456,7 +758,7 @@ wireGstinState('billToGstin','billToState');
 wireGstinState('billToGstin','placeOfSupply');
 
 /* Live API lookup */
-const GSTINCHECK_API_KEY='b217fc26c1f6checksume8bc30d52eb18f35';
+const GSTINCHECK_API_KEY='b217fc26c1f6ccd8e6bc30d52eb18f35';
 const GSTIN_REGEX=/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
 async function lookupGstin(gstin,type){
  const g=gstin.trim().toUpperCase();
@@ -477,8 +779,8 @@ async function lookupGstin(gstin,type){
  }
  }catch(e){}
 }
-document.getElementById('billToGstin').addEventListener('blur',e=>lookupGstin(e.target.textContent,'billTo'));
-document.getElementById('sellerGstin').addEventListener('blur',e=>lookupGstin(e.target.textContent,'seller'));
+document.getElementById('billToGstin')?.addEventListener('blur',e=>lookupGstin(e.target.textContent,'billTo'));
+document.getElementById('sellerGstin')?.addEventListener('blur',e=>lookupGstin(e.target.textContent,'seller'));
 
 /* ═══════════════════════════════════════════
  PAYMENT MODE SYNC
@@ -494,3 +796,5 @@ function syncPaymentModePrint(){
 fetchBillsFromCloud();
 showPage('dash');
 </script>
+</body>
+</html>

@@ -399,7 +399,7 @@ let items = [];
 let autoSaveTimer = null;
 let totalReturnsAccumulator = 0;
 
-// Navigation Routing Switching System
+// Navigation Switcher
 function showPage(page){
  document.getElementById('dashPage').classList.toggle('hidden', page!=='dash');
  document.getElementById('editorPage').classList.toggle('hidden', page!=='editor');
@@ -410,7 +410,7 @@ function showPage(page){
 }
 function goToDashboard(){ showPage('dash'); }
 
-// API Cloud Core Controllers
+// Database Network Synchronizers
 async function fetchBillsFromCloud() {
   const el = document.getElementById('saveStatus');
   if (el) el.textContent = 'Syncing database items...';
@@ -481,7 +481,7 @@ function calcFormAllPrices() {
 }
 
 /* ═══════════════════════════════════════════
- INVENTORY AND WAREHOUSE CONTROL
+ INVENTORY MANAGEMENT & INLINE EDITING
 ═══════════════════════════════════════════ */
 function renderInventoryGrid() {
   const tbody = document.getElementById('inventoryBody');
@@ -573,7 +573,7 @@ function removeInventoryItem(idx) {
 }
 
 /* ═══════════════════════════════════════════
- DASHBOARD LOG ANALYTICS AND METRICS
+ DASHBOARD METRIC LOGIC
 ═══════════════════════════════════════════ */
 function renderDashboard(){
  const q = (document.getElementById('searchInput').value||'').toLowerCase();
@@ -661,6 +661,7 @@ function confirmDelete(id){
  
  totalReturnsAccumulator += (targetBill.grandTotal || 0);
 
+ // Only return stock if it was subtracted previously
  if (targetBill.isDeducted && targetBill.items && Array.isArray(targetBill.items)) {
    targetBill.items.forEach(function(item) {
      const stockItem = inventory.find(function(i) { return i.name.toLowerCase() === item.name.toLowerCase(); });
@@ -677,7 +678,7 @@ function confirmDelete(id){
 }
 
 /* ═══════════════════════════════════════════
- INVOICE RECOMPILER WORKSPACE
+ INVOICE COMPILER ENGINE
 ═══════════════════════════════════════════ */
 function startNewInvoice(){
  currentBillId = 'bill_'+Date.now();
@@ -742,14 +743,12 @@ function showSaveStatus(msg){
   if (el) el.textContent = msg; 
 }
 
-/* ═══════════════════════════════════════════
- CRITICAL BUGFIX: DUAL-PRINT STOCK LOCK PROFILES
-═══════════════════════════════════════════ */
+/* SINGLE-TIME STOCK DEDUCTION LOGIC */
 async function printAndSave(){
  const existingBillState = allBills.find(function(b) { return b.id === currentBillId; });
  const alreadyProcessed = existingBillState ? !!existingBillState.isDeducted : false;
 
- // If the card is already finalized, skip the warehouse deduction pipeline completely
+ // If already printed once, print directly without re-deducting stock
  if (alreadyProcessed) {
    showSaveStatus("Updating bill information...");
    const bill = collectBillData();
@@ -765,7 +764,7 @@ async function printAndSave(){
    return; 
  }
 
- // Execution path for brand-new drafts
+ // Logic for fresh unsaved bills
  for (let i = 0; i < items.length; i++) {
    let item = items[i];
    if (!item.name) continue;
@@ -789,7 +788,7 @@ async function printAndSave(){
  showSaveStatus("Syncing stock volumes globally...");
  
  const bill = collectBillData();
- bill.isDeducted = true; // Permanently lock card execution status
+ bill.isDeducted = true; // Flag to prevent multiple deductions on reprint
  
  const idx = allBills.findIndex(function(b) { return b.id === bill.id; });
  if(idx>=0) allBills[idx]=bill; else allBills.unshift(bill);
@@ -829,7 +828,7 @@ function deleteCurrent(){
 }
 
 /* ═══════════════════════════════════════════
- INVOICE ROW TABLES MATRIX
+ INVOICE ROW BUILDER
 ═══════════════════════════════════════════ */
 function renderItems(){
  const body=document.getElementById('itemsBody');
@@ -1055,7 +1054,7 @@ function syncPaymentModePrint(){
  if(s&&p) p.textContent=s.value;
 }
 
-// Initial Boot Strapping 
+// Boot operations
 fetchBillsFromCloud();
 fetchInventoryFromCloud();
 showPage('dash');

@@ -72,7 +72,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 .toolbar .save-status{font-size:11px;padding:4px 10px;border-radius:20px;background:#1e3a5f;color:#93c5fd;font-weight:600;margin-left:auto;}
 
 /* ─── INVOICE PAGE ─── */
-.page{max-width:850px;margin:24px auto;background:var(--bg);border:1.5px solid var(--line);}
+.page{max-width:900px;margin:24px auto;background:var(--bg);border:1.5px solid var(--line);}
 .title-bar{text-align:center;font-weight:bold;font-size:15px;padding:6px 0;border-bottom:1.5px solid var(--line);letter-spacing:.5px;}
 .top-section{display:flex;border-bottom:1.5px solid var(--line);}
 .seller-info{flex:1.6;padding:10px 14px;border-right:1.5px solid var(--line);}
@@ -96,7 +96,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 .bill-to .state-row .val{font-weight:bold;}
 
 .name-cell-container{position:relative; width:100%; height:100%; min-height:22px;}
-.item-name-input{width:100%; min-height:20px; outline:none; padding:2px;}
+.item-name-input{width:100%; min-height:20px; outline:none; padding:2px; white-space:normal; word-break:break-word; overflow-wrap:break-word;}
 
 /* ─── SUGGESTION DROPDOWN BOX ─── */
 .suggestion-box{
@@ -112,33 +112,47 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 .suggestion-item .item-stock{font-weight:bold;color:#16a34a;}
 .suggestion-item .item-stock.out{color:#dc2626;}
 
-table.items{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed;}
-table.items th,table.items td{border-bottom:1px solid var(--line-light);padding:6px 4px;text-align:left;vertical-align:middle;white-space:nowrap;overflow:hidden;}
+/* IMPROVED TABLE STYLING & PADDING */
+table.items{width:100%;border-collapse:collapse;font-size:11.5px;table-layout:fixed;}
+table.items th, table.items td{
+  border-bottom:1px solid var(--line-light);
+  padding:10px 8px; /* Increased padding for generous spacing */
+  text-align:left;
+  vertical-align:middle;
+  white-space:normal;
+  word-break:break-word;
+  overflow-wrap:break-word;
+}
 table.items td:nth-child(2) { overflow: visible !important; } 
-table.items td[data-field="name"],table.items th:nth-child(2){white-space:normal;word-wrap:break-word;overflow-wrap:break-word;overflow:visible;}
 table.items td.del-cell{overflow:visible;text-align:center;padding:5px 2px;}
 table.items thead th{border-top:1.5px solid var(--line);border-bottom:1.5px solid var(--line);font-weight:bold;background:var(--accent);text-align:center;}
 table.items td.num,table.items th.num{text-align:right;}
 table.items td.center,table.items th.center{text-align:center;}
 
-table.items col.col-idx{width:4%;} table.items col.col-name{width:22%;}
-table.items col.col-hsn{width:10%;} table.items col.col-qty{width:8%;}
-table.items col.col-unit{width:6%;}table.items col.col-price{width:11%;}
-table.items col.col-priceinc{width:11%;}table.items col.col-gst{width:10%;}
-table.items col.col-amt{width:11%;}   table.items col.col-amtinc{width:13%;}
+/* OPTIMIZED COLUMN RATIOS TO PREVENT OVERFLOW */
+table.items col.col-idx{width:3.5%;} 
+table.items col.col-name{width:26%;}  /* Expanded for longer item names */
+table.items col.col-hsn{width:9.5%;} 
+table.items col.col-qty{width:7%;}
+table.items col.col-unit{width:6%;}
+table.items col.col-price{width:10%;}
+table.items col.col-priceinc{width:10%;}
+table.items col.col-gst{width:10%;}
+table.items col.col-amt{width:9%;}   
+table.items col.col-amtinc{width:11%;}
 table.items col.col-del{width:4%;}
 
-.row-del{background:#fff0f0;color:#b91c1c;border:1px solid #f3c0c0;border-radius:4px;width:16px;height:16px;line-height:1;font-size:10px;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;}
+.row-del{background:#fff0f0;color:#b91c1c;border:1px solid #f3c0c0;border-radius:4px;width:18px;height:18px;line-height:1;font-size:10px;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;}
 tr.total-row td{border-top:1.5px solid var(--line);border-bottom:1.5px solid var(--line);font-weight:bold;}
 .summary-bar{border-bottom:1.5px solid var(--line);font-size:11.5px;}
 .summary-bar .row{display:flex;}
-.summary-bar .row>div{padding:6px 14px;flex:1;}
+.summary-bar .row>div{padding:8px 14px;flex:1;}
 .summary-bar .row>div:first-child{border-right:1.5px solid var(--line);}
 .summary-bar .row:not(:last-child){border-bottom:1px solid var(--line-light);}
 .summary-bar .lbl{font-weight:normal;}
 .summary-bar .val{font-weight:bold;}
 table.taxbreak{width:100%;border-collapse:collapse;font-size:11px;border-bottom:1.5px solid var(--line);}
-table.taxbreak th,table.taxbreak td{border:1px solid var(--line-light);padding:5px 8px;text-align:right;}
+table.taxbreak th,table.taxbreak td{border:1px solid var(--line-light);padding:6px 8px;text-align:right;}
 table.taxbreak th{background:var(--accent);font-weight:bold;text-align:center;}
 table.taxbreak td.left,table.taxbreak th.left{text-align:left;}
 table.taxbreak td.center{text-align:center;}
@@ -573,7 +587,7 @@ function removeInventoryItem(idx) {
 }
 
 /* ═══════════════════════════════════════════
- DASHBOARD METRICS CALCULATOR
+ DASHBOARD METRIC LOGIC
 ═══════════════════════════════════════════ */
 function renderDashboard(){
  const q = (document.getElementById('searchInput').value||'').toLowerCase();
@@ -661,6 +675,7 @@ function confirmDelete(id){
  
  totalReturnsAccumulator += (targetBill.grandTotal || 0);
 
+ // Returns stock only if it was actually printed/deducted previously
  if (targetBill.isDeducted && targetBill.items && Array.isArray(targetBill.items)) {
    targetBill.items.forEach(function(item) {
      const stockItem = inventory.find(function(i) { return i.name.toLowerCase() === item.name.toLowerCase(); });
@@ -677,7 +692,7 @@ function confirmDelete(id){
 }
 
 /* ═══════════════════════════════════════════
- INVOICE GENERATOR STATE RECORDERS
+ INVOICE COMPILER ENGINE
 ═══════════════════════════════════════════ */
 function startNewInvoice(){
  currentBillId = 'bill_'+Date.now();
@@ -747,6 +762,7 @@ async function printAndSave(){
  const existingBillState = allBills.find(function(b) { return b.id === currentBillId; });
  const alreadyProcessed = existingBillState ? !!existingBillState.isDeducted : false;
 
+ // Skip warehouse deduction completely if this bill was printed before
  if (alreadyProcessed) {
    showSaveStatus("Updating bill information...");
    const bill = collectBillData();
@@ -762,6 +778,7 @@ async function printAndSave(){
    return; 
  }
 
+ // Fresh deduction for unsaved draft bills
  for (let i = 0; i < items.length; i++) {
    let item = items[i];
    if (!item.name) continue;
@@ -785,7 +802,7 @@ async function printAndSave(){
  showSaveStatus("Syncing stock volumes globally...");
  
  const bill = collectBillData();
- bill.isDeducted = true;
+ bill.isDeducted = true; // Permanently lock deduction status for future reprints
  
  const idx = allBills.findIndex(function(b) { return b.id === bill.id; });
  if(idx>=0) allBills[idx]=bill; else allBills.unshift(bill);
@@ -825,7 +842,7 @@ function deleteCurrent(){
 }
 
 /* ═══════════════════════════════════════════
- INVOICE ROW RENDERER & DIRECT GST EDITING
+ INVOICE ROW RENDERER (NO PERCENTAGE SYMBOL & EDITABLE GST)
 ═══════════════════════════════════════════ */
 function renderItems(){
  const body=document.getElementById('itemsBody');
@@ -856,7 +873,7 @@ function renderItems(){
      '<td class="center" contenteditable="true" data-field="unit">' + it.unit + '</td>' +
      '<td class="num" contenteditable="true" data-field="price">' + fmt(unitPriceExclGst) + '</td>' +
      '<td class="num" style="color: #475569; font-weight: 500;">₹' + fmt(unitPriceInclGst) + '</td>' +
-     '<td class="num">₹' + fmt(rowGstTotalAmt) + ' (<span contenteditable="true" data-field="gstPct" style="border-bottom:1px dotted #888; font-weight:bold; cursor:text; padding:0 2px;">' + it.gstPct + '</span>%)</td>' +
+     '<td class="num">₹' + fmt(rowGstTotalAmt) + ' (<span contenteditable="true" data-field="gstPct" style="border-bottom:1px dotted #888; font-weight:bold; cursor:text; padding:0 2px;">' + it.gstPct + '</span>)</td>' +
      '<td class="num" style="background: #fafafa;">₹' + fmt(rowAmountExclGst) + '</td>' +
      '<td class="num" style="background: #f8fafc; font-weight: bold; color: #1e3a8a;">₹' + fmt(rowAmountInclGst) + '</td>' +
      '<td class="del-cell"><button class="row-del" onclick="deleteRow(' + idx + ')">✕</button></td>';

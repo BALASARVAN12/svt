@@ -399,7 +399,7 @@ let items = [];
 let autoSaveTimer = null;
 let totalReturnsAccumulator = 0;
 
-// Navigation Switcher
+// Navigation Routing Switching System
 function showPage(page){
  document.getElementById('dashPage').classList.toggle('hidden', page!=='dash');
  document.getElementById('editorPage').classList.toggle('hidden', page!=='editor');
@@ -410,7 +410,7 @@ function showPage(page){
 }
 function goToDashboard(){ showPage('dash'); }
 
-// Database Network Synchronizers
+// Database Sync API Handlers
 async function fetchBillsFromCloud() {
   const el = document.getElementById('saveStatus');
   if (el) el.textContent = 'Syncing database items...';
@@ -481,7 +481,7 @@ function calcFormAllPrices() {
 }
 
 /* ═══════════════════════════════════════════
- INVENTORY MANAGEMENT & INLINE EDITING
+ INVENTORY UI AND DIRECT TABLE CELL EDITORS
 ═══════════════════════════════════════════ */
 function renderInventoryGrid() {
   const tbody = document.getElementById('inventoryBody');
@@ -573,7 +573,7 @@ function removeInventoryItem(idx) {
 }
 
 /* ═══════════════════════════════════════════
- DASHBOARD METRIC LOGIC
+ DASHBOARD METRICS CALCULATOR
 ═══════════════════════════════════════════ */
 function renderDashboard(){
  const q = (document.getElementById('searchInput').value||'').toLowerCase();
@@ -661,7 +661,6 @@ function confirmDelete(id){
  
  totalReturnsAccumulator += (targetBill.grandTotal || 0);
 
- // Only return stock if it was subtracted previously
  if (targetBill.isDeducted && targetBill.items && Array.isArray(targetBill.items)) {
    targetBill.items.forEach(function(item) {
      const stockItem = inventory.find(function(i) { return i.name.toLowerCase() === item.name.toLowerCase(); });
@@ -678,7 +677,7 @@ function confirmDelete(id){
 }
 
 /* ═══════════════════════════════════════════
- INVOICE COMPILER ENGINE
+ INVOICE GENERATOR STATE RECORDERS
 ═══════════════════════════════════════════ */
 function startNewInvoice(){
  currentBillId = 'bill_'+Date.now();
@@ -743,12 +742,11 @@ function showSaveStatus(msg){
   if (el) el.textContent = msg; 
 }
 
-/* SINGLE-TIME STOCK DEDUCTION LOGIC */
+/* SINGLE-TIME STOCK DEDUCTION / REPRINT GUARD */
 async function printAndSave(){
  const existingBillState = allBills.find(function(b) { return b.id === currentBillId; });
  const alreadyProcessed = existingBillState ? !!existingBillState.isDeducted : false;
 
- // If already printed once, print directly without re-deducting stock
  if (alreadyProcessed) {
    showSaveStatus("Updating bill information...");
    const bill = collectBillData();
@@ -764,7 +762,6 @@ async function printAndSave(){
    return; 
  }
 
- // Logic for fresh unsaved bills
  for (let i = 0; i < items.length; i++) {
    let item = items[i];
    if (!item.name) continue;
@@ -788,7 +785,7 @@ async function printAndSave(){
  showSaveStatus("Syncing stock volumes globally...");
  
  const bill = collectBillData();
- bill.isDeducted = true; // Flag to prevent multiple deductions on reprint
+ bill.isDeducted = true;
  
  const idx = allBills.findIndex(function(b) { return b.id === bill.id; });
  if(idx>=0) allBills[idx]=bill; else allBills.unshift(bill);
@@ -828,7 +825,7 @@ function deleteCurrent(){
 }
 
 /* ═══════════════════════════════════════════
- INVOICE ROW BUILDER
+ INVOICE ROW RENDERER & DIRECT GST EDITING
 ═══════════════════════════════════════════ */
 function renderItems(){
  const body=document.getElementById('itemsBody');
@@ -859,7 +856,7 @@ function renderItems(){
      '<td class="center" contenteditable="true" data-field="unit">' + it.unit + '</td>' +
      '<td class="num" contenteditable="true" data-field="price">' + fmt(unitPriceExclGst) + '</td>' +
      '<td class="num" style="color: #475569; font-weight: 500;">₹' + fmt(unitPriceInclGst) + '</td>' +
-     '<td class="num">₹' + fmt(rowGstTotalAmt) + ' (' + it.gstPct + '%)</td>' +
+     '<td class="num">₹' + fmt(rowGstTotalAmt) + ' (<span contenteditable="true" data-field="gstPct" style="border-bottom:1px dotted #888; font-weight:bold; cursor:text; padding:0 2px;">' + it.gstPct + '</span>%)</td>' +
      '<td class="num" style="background: #fafafa;">₹' + fmt(rowAmountExclGst) + '</td>' +
      '<td class="num" style="background: #f8fafc; font-weight: bold; color: #1e3a8a;">₹' + fmt(rowAmountInclGst) + '</td>' +
      '<td class="del-cell"><button class="row-del" onclick="deleteRow(' + idx + ')">✕</button></td>';
@@ -1054,7 +1051,7 @@ function syncPaymentModePrint(){
  if(s&&p) p.textContent=s.value;
 }
 
-// Boot operations
+// Initial Boot Operations
 fetchBillsFromCloud();
 fetchInventoryFromCloud();
 showPage('dash');

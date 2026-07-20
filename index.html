@@ -112,17 +112,17 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 .suggestion-item .item-stock{font-weight:bold;color:#16a34a;}
 .suggestion-item .item-stock.out{color:#dc2626;}
 
-/* STRICT SINGLE-LINE FOR NUMBERS & FLEXIBLE MULTI-LINE ONLY FOR PRODUCT NAMES */
+/* STRICT SINGLE-LINE NUMBERS & FLEXIBLE ITEM NAMES */
 table.items{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed;}
 table.items th, table.items td{
   border-bottom:1px solid var(--line-light);
   padding:8px 6px;
   text-align:left;
   vertical-align:middle;
-  white-space:nowrap; /* Keeps amounts and numbers strictly on a single row */
+  white-space:nowrap;
 }
 table.items td:nth-child(2), table.items th:nth-child(2){
-  white-space:normal !important; /* Only item names can go down onto new lines */
+  white-space:normal !important;
   word-break:break-word;
   overflow-wrap:break-word;
   overflow:visible !important;
@@ -132,15 +132,14 @@ table.items thead th{border-top:1.5px solid var(--line);border-bottom:1.5px soli
 table.items td.num,table.items th.num{text-align:right;}
 table.items td.center,table.items th.center{text-align:center;}
 
-/* OPTIMIZED COLUMN ALLOCATIONS */
 table.items col.col-idx{width:3.5%;} 
-table.items col.col-name{width:22.5%;} /* Room for multi-line product titles */
+table.items col.col-name{width:22.5%;} 
 table.items col.col-hsn{width:8.5%;} 
 table.items col.col-qty{width:5.5%;}
 table.items col.col-unit{width:4.5%;}
 table.items col.col-price{width:10%;}
 table.items col.col-priceinc{width:10%;}
-table.items col.col-gst{width:12%;}  /* Extra room for "₹2,822.71 (18)" on one line */
+table.items col.col-gst{width:12%;}  
 table.items col.col-amt{width:10.5%;}   
 table.items col.col-amtinc{width:10.5%;}
 table.items col.col-del{width:3%;}
@@ -189,7 +188,7 @@ table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
  html,body{background:#fff;padding:0;margin:0;width:100%;}
  .page{max-width:100%;width:100%;border:1.5px solid var(--line);margin:0 auto;box-sizing:border-box;overflow:hidden;}
  table.items,table.taxbreak{width:100%!important;max-width:100%;}
- .row-del,.add-row-btn, .suggestion-box{display:none!important;}
+ .row-del,.add-row-btn, .suggestion-box, .del-cell, col.col-del, table.items th:last-child {display:none!important;}
  .payment-mode-select{display:none!important;visibility:hidden!important;width:0!important;height:0!important;position:absolute!important;left:-9999px!important;}
  .payment-mode-print{display:inline!important;visibility:visible!important;}
  [contenteditable="true"]:hover,[contenteditable="true"]:focus{background:transparent;box-shadow:none;}
@@ -310,7 +309,7 @@ table.inventory-table th{background:#1e293b;color:#fff;font-weight:600;}
  <div class="kv-line"><span class="lbl">Place Of Supply:</span><span class="val" contenteditable="true" id="placeOfSupply" data-save="placeOfSupply">37-Andhra Pradesh</span></div>
  <div class="kv-line">
  <span class="lbl">Payment Mode:</span>
- <select class="payment-mode-select" id="paymentMode">
+ <select class="payment-mode-select" id="paymentMode" onchange="syncPaymentModePrint()">
  <option value="Cash">Cash</option><option value="Credit">Credit</option>
  <option value="UPI">UPI</option><option value="Bank Transfer">Bank Transfer</option>
  <option value="Cheque">Cheque</option><option value="Card">Card</option>
@@ -695,6 +694,12 @@ function startNewInvoice(){
    invoiceDate: new Date().toLocaleDateString('en-GB'), 
    customerName:'Customer Name', 
    customerAddr:'Customer Address', 
+   billToState:'State',
+   billToGstin:'GSTIN',
+   paymentMode:'Cash',
+   ewayBill:'',
+   vanNo:'',
+   placeOfSupply:'37-Andhra Pradesh',
    received:'0.00' 
  });
  renderItems();
@@ -712,24 +717,80 @@ function editBill(id){
 
 function printBill(id){ editBill(id); setTimeout(function(){ printAndSave(); }, 400); }
 
+function syncPaymentModePrint(){
+ const s=document.getElementById('paymentMode'),p=document.getElementById('paymentModePrint');
+ if(s&&p) p.textContent=s.value;
+}
+
 function resetEditorFields(data){
  const set = function(id,val){ const el=document.getElementById(id); if(el) el.textContent=val||''; };
  const setDS = function(ds,val){ const el=document.querySelector('[data-save="' + ds + '"]'); if(el) el.textContent=val||''; };
- setDS('customerName', data.customerName); setDS('customerAddr', data.customerAddr);
- set('invoiceNo', data.invoiceNo); set('invoiceDate', data.invoiceDate); set('received', data.received||'0.00');
+ 
+ setDS('titleBar', data.titleBar||'Tax Invoice');
+ setDS('sellerName', data.sellerName||'SREE VALLI TRADERS');
+ setDS('sellerAddr', data.sellerAddr||'GROUND FLOOR 24-59-13 PEDAGANTYADA VINAYAKA NAGAR Visakhapatnam');
+ setDS('sellerPhone', data.sellerPhone||'7989088940');
+ setDS('sellerGstin', data.sellerGstin||'37AJKPV2937N1ZB');
+ setDS('sellerEmail', data.sellerEmail||'radhavudathu1971@gmail.com');
+ setDS('sellerState', data.sellerState||'37-Andhra Pradesh');
+
+ setDS('customerName', data.customerName||'Customer Name'); 
+ setDS('customerAddr', data.customerAddr||'Customer Address');
+ set('billToState', data.billToState||'State');
+ set('billToGstin', data.billToGstin||'GSTIN');
+
+ set('invoiceNo', data.invoiceNo||'1'); 
+ set('invoiceDate', data.invoiceDate||new Date().toLocaleDateString('en-GB')); 
+ set('ewayBill', data.ewayBill||'');
+ set('vanNo', data.vanNo||'');
+ set('placeOfSupply', data.placeOfSupply||'37-Andhra Pradesh');
+ 
+ const pmSelect = document.getElementById('paymentMode');
+ if(pmSelect) pmSelect.value = data.paymentMode||'Cash';
+ syncPaymentModePrint();
+
+ set('received', data.received||'0.00');
+ setDS('terms', data.terms||'Thank you for doing business with us.');
+ setDS('forLabel', data.forLabel||'For SREE VALLI TRADERS:');
+ setDS('signature', data.signature||'Authorized Signatory');
 }
 
 function collectBillData(){
- const total = parseFloat(document.getElementById('grandTotal').textContent.replace(/,/g,''))||0;
- const recv = parseFloat(document.getElementById('received').textContent.replace(/,/g,''))||0;
+ const total = parseFloat((document.getElementById('grandTotal')?.textContent||'0').replace(/,/g,''))||0;
+ const recv = parseFloat((document.getElementById('received')?.textContent||'0').replace(/,/g,''))||0;
  
  const existingBill = allBills.find(function(b) { return b.id === currentBillId; });
  const previouslyDeducted = existingBill ? !!existingBill.isDeducted : false;
 
+ const getDS = function(ds){ return document.querySelector('[data-save="' + ds + '"]')?.textContent || ''; };
+ const getID = function(id){ return document.getElementById(id)?.textContent || ''; };
+
  return {
- id: currentBillId, invoiceNo: document.getElementById('invoiceNo').textContent, invoiceDate: document.getElementById('invoiceDate').textContent,
- customerName: document.querySelector('[data-save="customerName"]').textContent, customerAddr: document.querySelector('[data-save="customerAddr"]').textContent,
- received: document.getElementById('received').textContent, items: items, grandTotal: total, balance: Math.max(0, total - recv),
+ id: currentBillId, 
+ titleBar: getDS('titleBar'),
+ sellerName: getDS('sellerName'),
+ sellerAddr: getDS('sellerAddr'),
+ sellerPhone: getDS('sellerPhone'),
+ sellerGstin: getDS('sellerGstin'),
+ sellerEmail: getDS('sellerEmail'),
+ sellerState: getDS('sellerState'),
+ invoiceNo: getID('invoiceNo'), 
+ invoiceDate: getID('invoiceDate'),
+ ewayBill: getID('ewayBill'),
+ vanNo: getID('vanNo'),
+ placeOfSupply: getID('placeOfSupply'),
+ paymentMode: document.getElementById('paymentMode')?.value || 'Cash',
+ customerName: getDS('customerName'), 
+ customerAddr: getDS('customerAddr'),
+ billToState: getID('billToState'),
+ billToGstin: getID('billToGstin'),
+ items: items, 
+ grandTotal: total, 
+ received: getID('received'),
+ balance: Math.max(0, total - recv),
+ terms: getDS('terms'),
+ forLabel: getDS('forLabel'),
+ signature: getDS('signature'),
  isDeducted: previouslyDeducted
  };
 }
@@ -748,7 +809,15 @@ function showSaveStatus(msg){
   if (el) el.textContent = msg; 
 }
 
+/* SINGLE-TIME STOCK DEDUCTION / REPRINT GUARD WITH FLUSH FOR PENDING EDITS */
 async function printAndSave(){
+ // Force blur on active editable field to commit last-typed values immediately
+ if (document.activeElement && document.activeElement.blur) {
+   document.activeElement.blur();
+ }
+ syncPaymentModePrint();
+ recalcAll();
+
  const existingBillState = allBills.find(function(b) { return b.id === currentBillId; });
  const alreadyProcessed = existingBillState ? !!existingBillState.isDeducted : false;
 
@@ -830,7 +899,7 @@ function deleteCurrent(){
 }
 
 /* ═══════════════════════════════════════════
- INVOICE ROW RENDERER & NO PERCENTAGE SYMBOL
+ INVOICE ROW RENDERER & EDITABLE GST
 ═══════════════════════════════════════════ */
 function renderItems(){
  const body=document.getElementById('itemsBody');
@@ -1051,12 +1120,7 @@ async function lookupGstin(gstin,type){
 document.getElementById('billToGstin')?.addEventListener('blur',function(e){ lookupGstin(e.target.textContent,'billTo'); });
 document.getElementById('sellerGstin')?.addEventListener('blur',function(e){ lookupGstin(e.target.textContent,'seller'); });
 
-function syncPaymentModePrint(){
- const s=document.getElementById('paymentMode'),p=document.getElementById('paymentModePrint');
- if(s&&p) p.textContent=s.value;
-}
-
-// Initial Boot Operations
+// Boot Operations
 fetchBillsFromCloud();
 fetchInventoryFromCloud();
 showPage('dash');

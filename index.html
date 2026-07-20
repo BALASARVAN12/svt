@@ -72,7 +72,7 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 .toolbar .save-status{font-size:11px;padding:4px 10px;border-radius:20px;background:#1e3a5f;color:#93c5fd;font-weight:600;margin-left:auto;}
 
 /* ─── INVOICE PAGE ─── */
-.page{max-width:900px;margin:24px auto;background:var(--bg);border:1.5px solid var(--line);}
+.page{max-width:920px;margin:24px auto;background:var(--bg);border:1.5px solid var(--line);}
 .title-bar{text-align:center;font-weight:bold;font-size:15px;padding:6px 0;border-bottom:1.5px solid var(--line);letter-spacing:.5px;}
 .top-section{display:flex;border-bottom:1.5px solid var(--line);}
 .seller-info{flex:1.6;padding:10px 14px;border-right:1.5px solid var(--line);}
@@ -112,38 +112,41 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 .suggestion-item .item-stock{font-weight:bold;color:#16a34a;}
 .suggestion-item .item-stock.out{color:#dc2626;}
 
-/* IMPROVED TABLE STYLING & PADDING */
-table.items{width:100%;border-collapse:collapse;font-size:11.5px;table-layout:fixed;}
+/* STRICT SINGLE-LINE FOR NUMBERS & FLEXIBLE MULTI-LINE ONLY FOR PRODUCT NAMES */
+table.items{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed;}
 table.items th, table.items td{
   border-bottom:1px solid var(--line-light);
-  padding:10px 8px; /* Increased padding for generous spacing */
+  padding:8px 6px;
   text-align:left;
   vertical-align:middle;
-  white-space:normal;
+  white-space:nowrap; /* Keeps amounts and numbers strictly on a single row */
+}
+table.items td:nth-child(2), table.items th:nth-child(2){
+  white-space:normal !important; /* Only item names can go down onto new lines */
   word-break:break-word;
   overflow-wrap:break-word;
+  overflow:visible !important;
 }
-table.items td:nth-child(2) { overflow: visible !important; } 
 table.items td.del-cell{overflow:visible;text-align:center;padding:5px 2px;}
 table.items thead th{border-top:1.5px solid var(--line);border-bottom:1.5px solid var(--line);font-weight:bold;background:var(--accent);text-align:center;}
 table.items td.num,table.items th.num{text-align:right;}
 table.items td.center,table.items th.center{text-align:center;}
 
-/* OPTIMIZED COLUMN RATIOS TO PREVENT OVERFLOW */
+/* OPTIMIZED COLUMN ALLOCATIONS */
 table.items col.col-idx{width:3.5%;} 
-table.items col.col-name{width:26%;}  /* Expanded for longer item names */
-table.items col.col-hsn{width:9.5%;} 
-table.items col.col-qty{width:7%;}
-table.items col.col-unit{width:6%;}
+table.items col.col-name{width:22.5%;} /* Room for multi-line product titles */
+table.items col.col-hsn{width:8.5%;} 
+table.items col.col-qty{width:5.5%;}
+table.items col.col-unit{width:4.5%;}
 table.items col.col-price{width:10%;}
 table.items col.col-priceinc{width:10%;}
-table.items col.col-gst{width:10%;}
-table.items col.col-amt{width:9%;}   
-table.items col.col-amtinc{width:11%;}
-table.items col.col-del{width:4%;}
+table.items col.col-gst{width:12%;}  /* Extra room for "₹2,822.71 (18)" on one line */
+table.items col.col-amt{width:10.5%;}   
+table.items col.col-amtinc{width:10.5%;}
+table.items col.col-del{width:3%;}
 
 .row-del{background:#fff0f0;color:#b91c1c;border:1px solid #f3c0c0;border-radius:4px;width:18px;height:18px;line-height:1;font-size:10px;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;}
-tr.total-row td{border-top:1.5px solid var(--line);border-bottom:1.5px solid var(--line);font-weight:bold;}
+tr.total-row td{border-top:1.5px solid var(--line);border-bottom:1.5px solid var(--line);font-weight:bold; white-space:nowrap;}
 .summary-bar{border-bottom:1.5px solid var(--line);font-size:11.5px;}
 .summary-bar .row{display:flex;}
 .summary-bar .row>div{padding:8px 14px;flex:1;}
@@ -413,7 +416,6 @@ let items = [];
 let autoSaveTimer = null;
 let totalReturnsAccumulator = 0;
 
-// Navigation Routing Switching System
 function showPage(page){
  document.getElementById('dashPage').classList.toggle('hidden', page!=='dash');
  document.getElementById('editorPage').classList.toggle('hidden', page!=='editor');
@@ -424,7 +426,6 @@ function showPage(page){
 }
 function goToDashboard(){ showPage('dash'); }
 
-// Database Sync API Handlers
 async function fetchBillsFromCloud() {
   const el = document.getElementById('saveStatus');
   if (el) el.textContent = 'Syncing database items...';
@@ -494,9 +495,6 @@ function calcFormAllPrices() {
   document.getElementById('invSellInclusive').value = inclusiveSell ? '₹' + inclusiveSell.toFixed(2) : '';
 }
 
-/* ═══════════════════════════════════════════
- INVENTORY UI AND DIRECT TABLE CELL EDITORS
-═══════════════════════════════════════════ */
 function renderInventoryGrid() {
   const tbody = document.getElementById('inventoryBody');
   if(!tbody) return;
@@ -586,9 +584,6 @@ function removeInventoryItem(idx) {
   });
 }
 
-/* ═══════════════════════════════════════════
- DASHBOARD METRIC LOGIC
-═══════════════════════════════════════════ */
 function renderDashboard(){
  const q = (document.getElementById('searchInput').value||'').toLowerCase();
  let bills = [...allBills];
@@ -675,7 +670,6 @@ function confirmDelete(id){
  
  totalReturnsAccumulator += (targetBill.grandTotal || 0);
 
- // Returns stock only if it was actually printed/deducted previously
  if (targetBill.isDeducted && targetBill.items && Array.isArray(targetBill.items)) {
    targetBill.items.forEach(function(item) {
      const stockItem = inventory.find(function(i) { return i.name.toLowerCase() === item.name.toLowerCase(); });
@@ -691,9 +685,6 @@ function confirmDelete(id){
  });
 }
 
-/* ═══════════════════════════════════════════
- INVOICE COMPILER ENGINE
-═══════════════════════════════════════════ */
 function startNewInvoice(){
  currentBillId = 'bill_'+Date.now();
  items=[{name:'',hsn:'',qty:1,unit:'Kg',price:0,gstPct:5}];
@@ -757,12 +748,10 @@ function showSaveStatus(msg){
   if (el) el.textContent = msg; 
 }
 
-/* SINGLE-TIME STOCK DEDUCTION / REPRINT GUARD */
 async function printAndSave(){
  const existingBillState = allBills.find(function(b) { return b.id === currentBillId; });
  const alreadyProcessed = existingBillState ? !!existingBillState.isDeducted : false;
 
- // Skip warehouse deduction completely if this bill was printed before
  if (alreadyProcessed) {
    showSaveStatus("Updating bill information...");
    const bill = collectBillData();
@@ -778,7 +767,6 @@ async function printAndSave(){
    return; 
  }
 
- // Fresh deduction for unsaved draft bills
  for (let i = 0; i < items.length; i++) {
    let item = items[i];
    if (!item.name) continue;
@@ -802,7 +790,7 @@ async function printAndSave(){
  showSaveStatus("Syncing stock volumes globally...");
  
  const bill = collectBillData();
- bill.isDeducted = true; // Permanently lock deduction status for future reprints
+ bill.isDeducted = true;
  
  const idx = allBills.findIndex(function(b) { return b.id === bill.id; });
  if(idx>=0) allBills[idx]=bill; else allBills.unshift(bill);
@@ -842,7 +830,7 @@ function deleteCurrent(){
 }
 
 /* ═══════════════════════════════════════════
- INVOICE ROW RENDERER (NO PERCENTAGE SYMBOL & EDITABLE GST)
+ INVOICE ROW RENDERER & NO PERCENTAGE SYMBOL
 ═══════════════════════════════════════════ */
 function renderItems(){
  const body=document.getElementById('itemsBody');

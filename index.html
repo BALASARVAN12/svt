@@ -112,7 +112,6 @@ body{font-family:Arial,Helvetica,sans-serif;background:#f0f2f5;color:var(--ink);
 .suggestion-item .item-stock{font-weight:bold;color:#16a34a;}
 .suggestion-item .item-stock.out{color:#dc2626;}
 
-/* STRICT SINGLE-LINE NUMBERS & FLEXIBLE ITEM NAMES */
 table.items{width:100%;border-collapse:collapse;font-size:11px;table-layout:fixed;}
 table.items th, table.items td{
   border-bottom:1px solid var(--line-light);
@@ -153,12 +152,15 @@ tr.total-row td{border-top:1.5px solid var(--line);border-bottom:1.5px solid var
 .summary-bar .row:not(:last-child){border-bottom:1px solid var(--line-light);}
 .summary-bar .lbl{font-weight:normal;}
 .summary-bar .val{font-weight:bold;}
+
+/* UNIFORM TAX BREAKDOWN TABLE STYLING */
 table.taxbreak{width:100%;border-collapse:collapse;font-size:11px;border-bottom:1.5px solid var(--line);}
-table.taxbreak th,table.taxbreak td{border:1px solid var(--line-light);padding:6px 8px;text-align:right;}
+table.taxbreak th,table.taxbreak td{border:1px solid var(--line-light);padding:5px 8px;text-align:right;font-size:11px;}
 table.taxbreak th{background:var(--accent);font-weight:bold;text-align:center;}
 table.taxbreak td.left,table.taxbreak th.left{text-align:left;}
 table.taxbreak td.center{text-align:center;}
 table.taxbreak tr.total-row td{font-weight:bold;border-top:1.5px solid var(--line);}
+
 .footer{display:flex;}
 .footer>div{flex:1;padding:10px 14px;font-size:11.5px;min-height:70px;}
 .footer>div:first-child{border-right:1.5px solid var(--line);}
@@ -743,7 +745,7 @@ function resetEditorFields(data){
  set('invoiceDate', data.invoiceDate||new Date().toLocaleDateString('en-GB')); 
  set('ewayBill', data.ewayBill||'');
  set('vanNo', data.vanNo||'');
- set('placeOfSupply', data.placeOfSupply||'37-Andhra Pradesh');
+ set('placeOfSupply', data.placeOfSupply||data.billToState||'37-Andhra Pradesh');
  
  const pmSelect = document.getElementById('paymentMode');
  if(pmSelect) pmSelect.value = data.paymentMode||'Cash';
@@ -1049,13 +1051,17 @@ function recalcAll(){
      document.getElementById('amtWords').textContent=' ('+numberToWordsRupees(Math.round(tAmt))+' only)';
    }
 
-   // DETERMINE INTER-STATE (IGST) VS INTRA-STATE (CGST+SGST)
+   // SMART IGST VS CGST/SGST STATE CHECK
    const sellerStateText = document.getElementById('sellerState')?.textContent || '37';
-   const placeOfSupplyText = document.getElementById('placeOfSupply')?.textContent || document.getElementById('billToState')?.textContent || '37';
+   const billToStateText = document.getElementById('billToState')?.textContent || '37';
+   const placeOfSupplyText = document.getElementById('placeOfSupply')?.textContent || billToStateText;
    
    const sellerCode = sellerStateText.trim().substring(0, 2);
+   const customerCode = billToStateText.trim().substring(0, 2);
    const supplyCode = placeOfSupplyText.trim().substring(0, 2);
-   const isInterState = sellerCode && supplyCode && (sellerCode !== supplyCode);
+
+   // Inter-State if either Customer State or Place Of Supply differs from Seller State
+   const isInterState = sellerCode && ((customerCode && sellerCode !== customerCode) || (supplyCode && sellerCode !== supplyCode));
 
    const thead = document.getElementById('taxBreakHead');
    const tbody = document.getElementById('taxBreakBody');
@@ -1139,8 +1145,16 @@ const fmtINR = function(n){ return '₹'+(Math.round((n+Number.EPSILON)*100)/100
 
 document.getElementById('received')?.addEventListener('input', recalcAll);
 document.getElementById('invoicePage')?.addEventListener('input', autoSave);
+
+// AUTO-SYNC PLACE OF SUPPLY WHEN CUSTOMER STATE CHANGES
+document.getElementById('billToState')?.addEventListener('blur', function(e) {
+  const pos = document.getElementById('placeOfSupply');
+  if (pos && e.target.textContent) {
+    pos.textContent = e.target.textContent.trim();
+  }
+  recalcAll();
+});
 document.getElementById('placeOfSupply')?.addEventListener('blur', recalcAll);
-document.getElementById('billToState')?.addEventListener('blur', recalcAll);
 document.getElementById('sellerState')?.addEventListener('blur', recalcAll);
 
 const GSTIN_REGEX=/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
@@ -1154,12 +1168,21 @@ async function lookupGstin(gstin,type){
  if(!rec||json.flag===false||json.error) return;
  const name=rec.tradeNam||rec.lgnm||rec.tradeName||rec.legal_name;
  const addr=rec.pradr?.addr||rec.address||rec.adr;
+ const stateCode = g.substring(0, 2);
+
  if(type==='billTo'){
- if(name) document.querySelector('.bill-to .customer-name').textContent=name;
- if(addr){
- const ap=[addr.bno,addr.flno,addr.bnm,addr.st,addr.loc,addr.dst].filter(Boolean).join(', ');
- if(ap) document.querySelector('.bill-to .addr-line').textContent=ap;
- }
+   if(name) document.querySelector('.bill-to .customer-name').textContent=name;
+   if(addr){
+     const ap=[addr.bno,addr.flno,addr.bnm,addr.st,addr.loc,addr.dst].filter(Boolean).join(', ');
+     if(ap) document.querySelector('.bill-to .addr-line').textContent=ap;
+   }
+   if(stateCode) {
+     const stateEl = document.getElementById('billToState');
+     const posEl = document.getElementById('placeOfSupply');
+     if(stateEl) stateEl.textContent = stateCode + '-' + (rec.state||addr?.st||'State');
+     if(posEl) posEl.textContent = stateCode + '-' + (rec.state||addr?.st||'State');
+   }
+   recalcAll();
  }
  }catch(e){}
 }
@@ -1173,3 +1196,4 @@ showPage('dash');
 </script>
 </body>
 </html>
+
